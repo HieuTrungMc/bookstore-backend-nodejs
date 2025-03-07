@@ -1,9 +1,3 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
-// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
-// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
-
 generator client {
   provider = "prisma-client-js"
 }
@@ -11,4 +5,149 @@ generator client {
 datasource db {
   provider = "mysql"
   url      = env("DATABASE_URL")
+}
+
+model addresses {
+  id             Int     @id
+  user_id        Int?
+  address        String? @db.MediumText
+  receiver_name  String? @db.VarChar(255)
+  receiver_phone String? @db.VarChar(20)
+  users          users?  @relation(fields: [user_id], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "addresses_ibfk_1")
+
+  @@index([user_id], map: "user_id")
+}
+
+model book_images {
+  id      Int     @id
+  book_id Int?
+  url     String? @db.VarChar(255)
+  books   books?  @relation(fields: [book_id], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "book_images_ibfk_1")
+
+  @@index([book_id], map: "book_id")
+}
+
+model books {
+  id           Int            @id
+  title        String         @db.VarChar(255)
+  author       String?        @db.VarChar(255)
+  description  String?        @db.MediumText
+  price        Decimal?       @db.Decimal(10, 2)
+  import_price Decimal?       @db.Decimal(10, 2)
+  stock        Int?
+  discount_id  Int
+  sold         Int?
+  status       Int?           @db.TinyInt
+  is_featured  Boolean?
+  is_new       Boolean?
+  pages        Int?
+  publish_year Int?
+  weight       Decimal?       @db.Decimal(10, 2)
+  size         String?        @db.VarChar(50)
+  category_id  Int?
+  publisher_id Int?
+  book_images  book_images[]
+  categories   categories?    @relation(fields: [category_id], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "books_ibfk_1")
+  publishers   publishers?    @relation(fields: [publisher_id], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "books_ibfk_2")
+  discounts    discounts      @relation(fields: [discount_id], references: [id], onUpdate: Restrict, map: "books_ibfk_3")
+  cart_details cart_details[]
+  reviews      reviews[]
+
+  @@index([discount_id], map: "books_ibfk_3")
+  @@index([category_id], map: "category_id")
+  @@index([publisher_id], map: "publisher_id")
+}
+
+model cart {
+  id             Int            @id
+  user_id        Int?
+  total          Decimal?       @db.Decimal(10, 2)
+  address        String?        @db.MediumText
+  status         String?        @db.VarChar(50)
+  payment_method String?        @db.VarChar(50)
+  users          users?         @relation(fields: [user_id], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "cart_ibfk_1")
+  cart_details   cart_details[]
+  receipt        receipt[]
+
+  @@index([user_id], map: "user_id")
+}
+
+model cart_details {
+  id       Int       @id
+  cart_id  Int?
+  book_id  Int?
+  price    Decimal?  @db.Decimal(10, 2)
+  quantity Int?
+  status   Int       @db.TinyInt
+  cart     cart?     @relation(fields: [cart_id], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "cart_details_ibfk_1")
+  books    books?    @relation(fields: [book_id], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "cart_details_ibfk_2")
+  receipt  receipt[]
+
+  @@index([book_id], map: "book_id")
+  @@index([cart_id], map: "order_id")
+}
+
+model categories {
+  id          Int     @id
+  name        String  @db.VarChar(255)
+  slug        String  @db.VarChar(255)
+  description String? @db.MediumText
+  books       books[]
+}
+
+model discounts {
+  id         Int      @id
+  name       String   @db.VarChar(255)
+  code       String?  @db.VarChar(50)
+  percent    Decimal? @db.Decimal(5, 2)
+  start_date DateTime @default(now()) @db.Timestamp(0)
+  end_date   DateTime @default(dbgenerated("('0000-00-00 00:00:00')")) @db.Timestamp(0)
+  books      books[]
+}
+
+model publishers {
+  id          Int     @id
+  name        String  @db.VarChar(255)
+  slug        String  @db.VarChar(255)
+  description String? @db.MediumText
+  address     String? @db.MediumText
+  image       String? @db.VarChar(255)
+  books       books[]
+}
+
+model receipt {
+  id              Int          @id
+  cart_details_id Int
+  cart_id         Int
+  cart_details    cart_details @relation(fields: [cart_details_id], references: [id], onUpdate: Restrict, map: "rcpt_key_1")
+  cart            cart         @relation(fields: [cart_id], references: [id], onUpdate: Restrict, map: "rcpt_key_2")
+
+  @@index([cart_details_id], map: "rcpt_key_1")
+  @@index([cart_id], map: "rcpt_key_2")
+}
+
+model reviews {
+  id      Int     @id
+  book_id Int?
+  user_id Int?
+  rating  Int?
+  comment String? @db.MediumText
+  books   books?  @relation(fields: [book_id], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "reviews_ibfk_1")
+  users   users?  @relation(fields: [user_id], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "reviews_ibfk_2")
+
+  @@index([book_id], map: "book_id")
+  @@index([user_id], map: "user_id")
+}
+
+model users {
+  id        Int         @id
+  username  String      @db.VarChar(255)
+  password  String      @db.VarChar(255)
+  name      String?     @db.VarChar(255)
+  email     String?     @db.VarChar(255)
+  avatar    String?     @db.VarChar(255)
+  status    Int?        @db.TinyInt
+  addresses addresses[]
+  cart      cart[]
+  reviews   reviews[]
 }
