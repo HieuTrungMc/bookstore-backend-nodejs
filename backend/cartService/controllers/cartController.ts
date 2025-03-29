@@ -20,7 +20,10 @@ export const addCartItem = async (
         where: { id: existingItem.id },
         data: { quantity: existingItem.quantity + quantity },
       });
-      res.json(updatedItem);
+      res.json({
+        success: true,
+        data: updatedItem,
+      });
       return;
     }
 
@@ -31,10 +34,13 @@ export const addCartItem = async (
         quantity,
       },
     });
-    res.status(200).json(newCartItem);
+    res.status(200).json({
+      success: true,
+      data: newCartItem,
+    });
   } catch (error) {
     console.log(error);
-    res.status(500).json({ error: "Error when add to cart" });
+    res.status(500).json({ success: false, message: "Error when add to cart" });
   }
 };
 
@@ -47,7 +53,7 @@ export const updateCartItemQuantity = async (
   try {
     if (finalQuantity <= 0) {
       await prisma.cart_items.delete({ where: { id: cartItemId } });
-      res.status(200).json({ message: "Cart item removed" });
+      res.status(200).json({ success: true, message: "Cart item removed" });
       return;
     }
 
@@ -55,10 +61,13 @@ export const updateCartItemQuantity = async (
       where: { id: cartItemId },
       data: { quantity: finalQuantity, updated_at: new Date() },
     });
-    res.status(200).json(updatedItem);
+    res.status(200).json({ success: true, data: updatedItem });
   } catch (error) {
     console.log(error);
-    res.status(500).json({ error: "Error when update cart item quantity" });
+    res.status(500).json({
+      success: false,
+      message: "Error when update cart item quantity",
+    });
   }
 };
 
@@ -70,9 +79,11 @@ export const removeCartItem = async (
 
   try {
     const cart = await prisma.cart_items.delete({ where: { id: cartItemId } });
-    res.status(200).json({ message: "Cart is deleted." });
+    res.status(200).json({ success: true, message: "Cart is deleted." });
   } catch (error) {
     console.error("Error removing from cart:", error);
-    res.status(500).json({ error: "Error when delete cart items" });
+    res
+      .status(500)
+      .json({ success: false, message: "Error when delete cart items" });
   }
 };
