@@ -34,6 +34,7 @@
     "ws": "^8.18.1"
   },
   "dependencies": {
-    "@prisma/client": "^6.4.1"
+    "@prisma/client": "^6.4.1",
+    "axios": "^1.8.4"
   }
 }
