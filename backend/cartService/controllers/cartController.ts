@@ -1,6 +1,7 @@
 import { Request, Response } from "express";
 import axios from "axios";
 import prisma from "../utils/prismaClient";
+import { Prisma } from "@prisma/client";
 import { CartItemType } from "../models/CartType";
 
 export const addCartItem = async (
@@ -37,7 +38,7 @@ export const addCartItem = async (
       });
       res.json({
         success: true,
-        data: { ...updatedItem, book:bookReviews },
+        data: { ...updatedItem, book: bookReviews },
       });
       return;
     }
@@ -99,10 +100,10 @@ export const removeCartItem = async (
   req: Request,
   res: Response
 ): Promise<void> => {
-  const { cartItemId } = req.body;
+  const { cartItemId } = req.params;
 
   try {
-    const cart = await prisma.cart_items.delete({ where: { id: cartItemId } });
+    const cart = await prisma.cart_items.delete({ where: { id: Number(cartItemId) } });
     res.status(200).json({ success: true, message: "Cart is deleted." });
   } catch (error) {
     console.error("Error removing from cart:", error);
@@ -112,32 +113,30 @@ export const removeCartItem = async (
   }
 };
 
-
-export const checkout = async (req: Request, res: Response):Promise<void> => {
+export const checkout = async (req: Request, res: Response): Promise<void> => {
   const { userId } = req.body;
   try {
-
     if (!userId) {
       res.status(400).json({ error: "Missing required field: userId" });
       return;
     }
 
     const order = await prisma.orders.create({
-      data:{
+      data: {
         user_id: userId,
         total: 0,
         address: "",
         payment_method: "",
-      }
-    })
+      },
+    });
 
     const cartItems = await prisma.cart_items.findMany({
       where: { user_id: userId },
     });
 
     if (cartItems.length === 0) {
-        res.status(400).json({ error: 'Cart is empty' });
-      return 
+      res.status(400).json({ error: "Cart is empty" });
+      return;
     }
     let total = 0;
 
@@ -164,7 +163,7 @@ export const checkout = async (req: Request, res: Response):Promise<void> => {
         });
       })
     );
-    
+
     await prisma.orders.update({
       where: { id: order.id },
       data: { total },
@@ -179,18 +178,24 @@ export const checkout = async (req: Request, res: Response):Promise<void> => {
       },
     });
   } catch (error) {
-    console.error('Error creating order:', error);
-    res.status(500).json({ success: false, message: "Error when create new order" });
+    console.error("Error creating order:", error);
+    res
+      .status(500)
+      .json({ success: false, message: "Error when create new order" });
   }
 };
 
-
-export const updateOrderInfo = async (req: Request, res: Response):Promise<void> => {
+export const updateOrderInfo = async (
+  req: Request,
+  res: Response
+): Promise<void> => {
   const orderId = parseInt(req.params.id);
-  const {address, paymentMethod} = req.body;
+  const { address, paymentMethod } = req.body;
   try {
-    if(!address || !paymentMethod) {
-      res.status(400).json({ error: "Missing required fields: address, paymentMethod" });
+    if (!address || !paymentMethod) {
+      res
+        .status(400)
+        .json({ error: "Missing required fields: address, paymentMethod" });
       return;
     }
     const order = await prisma.orders.update({
@@ -199,8 +204,8 @@ export const updateOrderInfo = async (req: Request, res: Response):Promise<void>
         address: address,
         payment_method: paymentMethod,
         updated_at: new Date(),
-      }
-    })
+      },
+    });
 
     res.status(200).json({
       success: true,
@@ -212,12 +217,17 @@ export const updateOrderInfo = async (req: Request, res: Response):Promise<void>
       },
     });
   } catch (error) {
-    console.error('Error creating order:', error);
-    res.status(500).json({ success: false, message: "Error when update order info" });
+    console.error("Error creating order:", error);
+    res
+      .status(500)
+      .json({ success: false, message: "Error when update order info" });
   }
-}
+};
 
-export const updateOrderStatus = async (req: Request, res: Response):Promise<void> => {
+export const updateOrderStatus = async (
+  req: Request,
+  res: Response
+): Promise<void> => {
   const orderId = parseInt(req.params.id);
   const { status } = req.body;
   try {
@@ -241,11 +251,16 @@ export const updateOrderStatus = async (req: Request, res: Response):Promise<voi
     });
   } catch (error) {
     console.error("Error updating order status:", error);
-    res.status(500).json({ success: false, message: "Error when update order status" });
+    res
+      .status(500)
+      .json({ success: false, message: "Error when update order status" });
   }
-}
+};
 
-export const getOrderInfoById = async (req: Request, res: Response):Promise<void> => {
+export const getOrderInfoById = async (
+  req: Request,
+  res: Response
+): Promise<void> => {
   const orderId = parseInt(req.params.id);
   try {
     if (!orderId) {
@@ -268,10 +283,13 @@ export const getOrderInfoById = async (req: Request, res: Response):Promise<void
     console.error("Error fetching orders:", error);
     res.status(500).json({ success: false, message: "Error when get orders" });
   }
-}
+};
 
-export const getAllOrderInfoByUserId = async (req: Request, res: Response):Promise<void> => {
-  const {userId} = req.body
+export const getAllOrderInfoByUserId = async (
+  req: Request,
+  res: Response
+): Promise<void> => {
+  const { userId } = req.body;
   try {
     if (!userId) {
       res.status(400).json({ error: "Missing required field: userId" });
@@ -293,4 +311,43 @@ export const getAllOrderInfoByUserId = async (req: Request, res: Response):Promi
     console.error("Error fetching orders:", error);
     res.status(500).json({ success: false, message: "Error when get orders" });
   }
-}
+};
+
+export const getAllOrder = async (
+  req: Request,
+  res: Response
+): Promise<void> => {
+  try {
+    const {
+      sortBy = "",
+      sortOrder = "asc",
+      page = 1,
+      limit = 25,
+    } = req.query;
+    const skip = (Number(page) - 1) * Number(limit);
+    const take = Number(limit);
+    const sortOrderStr =
+      String(sortOrder).toLowerCase() === "asc" ? "asc" : "desc";
+    const findOptions: Prisma.ordersFindManyArgs = {
+      skip,
+      take,
+    };
+    if (sortBy) {
+      findOptions.orderBy = {
+        [String(sortBy)]: sortOrderStr,
+      } as Prisma.ordersOrderByWithRelationInput;
+    }
+    const orders = await prisma.orders.findMany(findOptions);
+    const total = await prisma.orders.count();
+    res.status(200).json({
+      success: true,
+      data: orders,
+      total,
+      page: Number(page),
+      totalPages: Math.ceil(total / take),
+    });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: "Error when get all orders" });
+  }
+};
