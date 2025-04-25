@@ -2,7 +2,7 @@ import express from "express";
 import cors from "cors"
 import bookRoutes from './routes/bookRoutes'
 
-const PORT = process.env.PORT
+const PORT = process.env.PORT || 5001
 const app = express()
 
 app.use(express.json())
