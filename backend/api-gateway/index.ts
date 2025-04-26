@@ -22,6 +22,14 @@ app.use(
     changeOrigin: true,
   })
 );
+
+app.use(
+  '/user',
+  createProxyMiddleware({
+    target: 'http://localhost:5003',
+    changeOrigin: true,
+  })
+);
 app.get('/', (req, res) => {
   res.json({ message: 'API Gateway is running' });
 });

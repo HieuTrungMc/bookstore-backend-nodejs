@@ -1,0 +1,22 @@
+"use strict";
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
+Object.defineProperty(exports, "__esModule", { value: true });
+const express_1 = __importDefault(require("express"));
+const bookController_1 = require("../controllers/bookController");
+const router = express_1.default.Router();
+router.get('/all', bookController_1.fetchAllBooks);
+router.get('/allcategory', bookController_1.fetchAllCategories);
+router.post('/createbook', bookController_1.createNewBook);
+router.post('/createcategory', bookController_1.createNewCategory);
+router.post('/deletebook/:bookId', bookController_1.deleteBookById);
+router.post('/updatebook/:bookId', bookController_1.updateBookById);
+router.post('/updatecategory/:categoryId', bookController_1.updateCategoryById);
+router.post('/deletecategory/:categoryId', bookController_1.deleteCategoryById);
+router.get('/category/:categorySlug', bookController_1.fetchBooksByCategory);
+router.get('/new-arrivals/:categorySlug', bookController_1.fetchNewArrivals);
+router.get('/recommendations/:categorySlug', bookController_1.fetchRecommendations);
+router.get('/details/:bookId', bookController_1.fetchBookDetails);
+router.get('/search', bookController_1.searchBooks);
+exports.default = router;
