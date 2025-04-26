@@ -5,6 +5,7 @@ import {
     deleteBookById,
     deleteCategoryById,
     fetchAllBooks, fetchAllCategories, fetchBookDetails, fetchBooksByCategory, fetchNewArrivals, fetchRecommendations,
+    searchBooks,
     updateBookById,
     updateCategoryById
 } from "../controllers/bookController";
@@ -23,5 +24,6 @@ router.get('/category/:categorySlug', fetchBooksByCategory);
 router.get('/new-arrivals/:categorySlug', fetchNewArrivals);
 router.get('/recommendations/:categorySlug', fetchRecommendations);
 router.get('/details/:bookId', fetchBookDetails);
+router.get('/search', searchBooks);
 
 export default router;
