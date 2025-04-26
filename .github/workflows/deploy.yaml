@@ -1,5 +1,10 @@
 name: Deploy Microservices Backend
-on: [push]
+on:
+
+  push:
+    branches:
+      - 'develop'
+      - 'main'
 jobs:
   build:
     name: Build
