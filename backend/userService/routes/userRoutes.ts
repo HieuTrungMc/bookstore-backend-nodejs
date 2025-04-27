@@ -1,5 +1,5 @@
 import express from 'express';
-import { signup, login, getAccountInfo, changePassword, getCurrentUser } from '../controllers/userController';
+import { signup, login, getAccountInfo, changePassword, getCurrentUser, getUserById } from '../controllers/userController';
 import { authenticateToken } from '../middleware/authMiddleware';
 
 const router = express.Router();
@@ -24,6 +24,15 @@ router.post('/login', async (req, res, next) => {
 router.get('/account/:email', async (req, res, next) => {
   try {
     await getAccountInfo(req, res);
+  } catch (error) {
+    next(error);
+  }
+});
+
+// New route to get user by ID
+router.get('/user/:id', async (req, res, next) => {
+  try {
+    await getUserById(req, res);
   } catch (error) {
     next(error);
   }

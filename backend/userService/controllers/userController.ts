@@ -144,6 +144,45 @@ export const getAccountInfo = async (req: Request, res: Response) => {
   }
 };
 
+// Get user by ID
+export const getUserById = async (req: Request, res: Response) => {
+  try {
+    const { id } = req.params;
+
+    if (!id) {
+      return res.status(400).json({ message: 'User ID is required' });
+    }
+
+    const userId = parseInt(id, 10);
+
+    if (isNaN(userId)) {
+      return res.status(400).json({ message: 'Invalid user ID format' });
+    }
+
+    // Find the user by ID
+    const user = await prisma.users.findUnique({
+      where: { id: userId },
+      include: {
+        addresses: true // Include user addresses
+      }
+    });
+
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+  }
+
+    // Return user data (excluding password)
+    const { password, ...userData } = user;
+
+    res.status(200).json({
+      user: userData
+    });
+  } catch (error) {
+    console.error('Get user by ID error:', error);
+    res.status(500).json({ message: 'Internal server error' });
+  }
+};
+
 // Change password
 export const changePassword = async (req: Request, res: Response) => {
   try {
@@ -216,7 +255,7 @@ export const getCurrentUser = async (req: Request, res: Response) => {
 
     // Return user data (excluding password)
     const { password, ...userData } = user;
-    
+
     res.status(200).json({
       user: userData
     });
