@@ -8,7 +8,13 @@ export const fetchAllBooks = async (
   res: Response
 ): Promise<void> => {
   try {
-    const { sortBy = "", sortOrder = "asc", page = 1, limit = 25 } = req.query;
+    const {
+      sortBy = "",
+      sortOrder = "asc",
+      page = 1,
+      limit = 25,
+      search = "",
+    } = req.query;
     const skip = (Number(page) - 1) * Number(limit);
     const take = Number(limit);
     const sortOrderStr =
@@ -23,14 +29,33 @@ export const fetchAllBooks = async (
       },
       skip,
       take,
+      where: {},
     };
+    if (search) {
+      findOptions.where = {
+        OR: [
+          {
+            title: {
+              contains: String(search),
+            },
+          },
+          {
+            author: {
+              contains: String(search),
+            },
+          },
+        ],
+      };
+    }
     if (sortBy) {
       findOptions.orderBy = {
         [String(sortBy)]: sortOrderStr,
       } as Prisma.booksOrderByWithRelationInput;
     }
     const books = await prisma.books.findMany(findOptions);
-    const total = await prisma.books.count();
+    const total = await prisma.books.count({
+      where: findOptions.where,
+    });
     res.status(200).json({
       success: true,
       data: books,
@@ -121,8 +146,8 @@ export const fetchNewArrivals = async (
   } catch (error) {
     console.error("Error fetching new arrivals:", error);
     res
-    .status(500)
-    .json({ success: false, message: "Failed to fetch new arrivals." });
+      .status(500)
+      .json({ success: false, message: "Failed to fetch new arrivals." });
   }
 };
 
@@ -153,8 +178,8 @@ export const fetchRecommendations = async (
   } catch (error) {
     console.error("Error fetching recommendations:", error);
     res
-    .status(500)
-    .json({ success: false, message: "Failed to fetch recommendations." });
+      .status(500)
+      .json({ success: false, message: "Failed to fetch recommendations." });
   }
 };
 
@@ -186,8 +211,8 @@ export const fetchBookDetails = async (
   } catch (error) {
     console.error("Error fetching book details:", error);
     res
-    .status(500)
-    .json({ success: false, message: "Failed to fetch book details." });
+      .status(500)
+      .json({ success: false, message: "Failed to fetch book details." });
   }
 };
 
@@ -262,7 +287,7 @@ export const searchBooks = async (
       page = 1,
       limit = 10,
       featured,
-      isNew
+      isNew,
     } = req.query;
 
     // Build the where clause based on search parameters
@@ -274,7 +299,7 @@ export const searchBooks = async (
       whereClause.OR = [
         { title: { contains: searchQuery } },
         { description: { contains: searchQuery } },
-        { author: { contains: searchQuery } }
+        { author: { contains: searchQuery } },
       ];
     }
 
@@ -286,14 +311,14 @@ export const searchBooks = async (
     // Filter by category if provided
     if (category) {
       whereClause.categories = {
-        slug: String(category)
+        slug: String(category),
       };
     }
 
     // Filter by publisher if provided
     if (publisher) {
       whereClause.publishers = {
-        slug: String(publisher)
+        slug: String(publisher),
       };
     }
 
@@ -312,12 +337,12 @@ export const searchBooks = async (
 
     // Filter by featured status
     if (featured !== undefined) {
-      whereClause.is_featured = featured === 'true' ? true : false;
+      whereClause.is_featured = featured === "true" ? true : false;
     }
 
     // Filter by new status
     if (isNew !== undefined) {
-      whereClause.is_new = isNew === 'true' ? true : false;
+      whereClause.is_new = isNew === "true" ? true : false;
     }
 
     // Calculate pagination values
@@ -345,7 +370,7 @@ export const searchBooks = async (
     const sortField = String(sort);
     if (sortField) {
       findOptions.orderBy = {
-        [sortField]: sortOrder
+        [sortField]: sortOrder,
       } as Prisma.booksOrderByWithRelationInput;
     }
 
@@ -368,10 +393,10 @@ export const searchBooks = async (
   } catch (error) {
     console.error("Error searching books:", error);
     res.status(500).json({
-        success: false,
+      success: false,
       message: "An error occurred while searching for books.",
-      });
-    }
+    });
+  }
 };
 
 export const fetchAllCategories = async (
@@ -379,7 +404,7 @@ export const fetchAllCategories = async (
   res: Response
 ): Promise<void> => {
   try {
-    const { sortBy = "", sortOrder = "asc", page = 1, limit = 25 } = req.query;
+    const { sortBy = "", sortOrder = "asc", page = 1, limit = 25, search="" } = req.query;
     const skip = (Number(page) - 1) * Number(limit);
     const take = Number(limit);
     const sortOrderStr =
@@ -388,14 +413,28 @@ export const fetchAllCategories = async (
     const findOptions: Prisma.categoriesFindManyArgs = {
       skip,
       take,
+      where: {},
     };
+    if (search) {
+      findOptions.where = {
+        OR: [
+          {
+            name: {
+              contains: String(search),
+            },
+          },
+        ],
+      };
+    }
     if (sortBy) {
       findOptions.orderBy = {
         [String(sortBy)]: sortOrderStr,
       } as Prisma.categoriesOrderByWithRelationInput;
     }
     const categories = await prisma.categories.findMany(findOptions);
-    const total = await prisma.categories.count();
+    const total = await prisma.categories.count({
+      where: findOptions.where,
+    });
     res.status(200).json({
       success: true,
       data: categories,
@@ -406,8 +445,8 @@ export const fetchAllCategories = async (
   } catch (error) {
     console.error("Error fetching categories:", error);
     res
-    .status(500)
-    .json({ success: false, message: "Failed to fetch categories." });
+      .status(500)
+      .json({ success: false, message: "Failed to fetch categories." });
   }
 };
 
@@ -426,8 +465,8 @@ export const createNewCategory = async (
   } catch (error) {
     console.error("Error creating category:", error);
     res
-    .status(500)
-    .json({ success: false, message: "Failed to create category." });
+      .status(500)
+      .json({ success: false, message: "Failed to create category." });
   }
 };
 
@@ -448,8 +487,8 @@ export const updateCategoryById = async (
   } catch (error) {
     console.error("Error updating category:", error);
     res
-    .status(500)
-    .json({ success: false, message: "Failed to update category." });
+      .status(500)
+      .json({ success: false, message: "Failed to update category." });
   }
 };
 
@@ -463,9 +502,7 @@ export const deleteCategoryById = async (
       where: { category_id: Number(categoryId) },
     });
     if (numberOfBooksInCategory > 0) {
-      res
-      .status(400)
-      .json({
+      res.status(400).json({
         success: false,
         message: "Cannot delete category with existing books.",
       });
@@ -478,7 +515,7 @@ export const deleteCategoryById = async (
   } catch (error) {
     console.error("Error deleting category:", error);
     res
-    .status(500)
-    .json({ success: false, message: "Failed to delete category." });
+      .status(500)
+      .json({ success: false, message: "Failed to delete category." });
   }
 };

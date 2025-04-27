@@ -1,8 +1,9 @@
 import { Request, Response } from "express";
 import axios from "axios";
 import prisma from "../utils/prismaClient";
-import { Prisma } from "@prisma/client";
+import { Prisma, orders_status } from "@prisma/client";
 import { CartItemType } from "../models/CartType";
+import { OrderItemType } from "../models/OrderType";
 
 export const addCartItem = async (
   req: Request,
@@ -103,7 +104,9 @@ export const removeCartItem = async (
   const { cartItemId } = req.params;
 
   try {
-    const cart = await prisma.cart_items.delete({ where: { id: Number(cartItemId) } });
+    const cart = await prisma.cart_items.delete({
+      where: { id: Number(cartItemId) },
+    });
     res.status(200).json({ success: true, message: "Cart is deleted." });
   } catch (error) {
     console.error("Error removing from cart:", error);
@@ -275,9 +278,22 @@ export const getOrderInfoById = async (
       },
     });
 
+    const userResponse = await axios.get(
+      `http://localhost:5000/user/accountid/${orders.user_id}`
+    );
+    const user = userResponse.data.user;
+    const matchingAddress = user.addresses.find(
+      (userAddress: any) => userAddress.address === orders.address
+    );
+
+    const userPhone = matchingAddress ? matchingAddress.receiver_phone : null;
     res.status(200).json({
       success: true,
-      data: orders,
+      data: {
+        ...orders,
+        username: userResponse.data.user.username,
+        user_phone: userPhone,
+      },
     });
   } catch (error) {
     console.error("Error fetching orders:", error);
@@ -323,6 +339,7 @@ export const getAllOrder = async (
       sortOrder = "asc",
       page = 1,
       limit = 25,
+      search = "",
     } = req.query;
     const skip = (Number(page) - 1) * Number(limit);
     const take = Number(limit);
@@ -331,17 +348,59 @@ export const getAllOrder = async (
     const findOptions: Prisma.ordersFindManyArgs = {
       skip,
       take,
+      where: {},
     };
+    if (search) {
+      findOptions.where = {
+        status: search as orders_status,
+      };
+    }
     if (sortBy) {
       findOptions.orderBy = {
         [String(sortBy)]: sortOrderStr,
       } as Prisma.ordersOrderByWithRelationInput;
     }
     const orders = await prisma.orders.findMany(findOptions);
-    const total = await prisma.orders.count();
+
+    const ordersWithUser = await Promise.all(
+      orders.map(async (order: OrderItemType) => {
+        try {
+          const userResponse = await axios.get(
+            `http://localhost:5000/user/accountid/${order.user_id}`
+          );
+          const user = userResponse.data.user;
+
+          const matchingAddress = user.addresses.find(
+            (userAddress: any) => userAddress.address === order.address
+          );
+
+          const userPhone = matchingAddress
+            ? matchingAddress.receiver_phone
+            : null;
+          return {
+            ...order,
+            username: userResponse.data.user.username,
+            user_phone: userPhone,
+          };
+        } catch (err) {
+          console.error(
+            `Error fetching user data for userId ${order.user_id}:`,
+            err
+          );
+          return {
+            ...order,
+            username: null,
+            user_phone: null,
+          };
+        }
+      })
+    );
+    const total = await prisma.orders.count({
+      where: findOptions.where,
+    });
     res.status(200).json({
       success: true,
-      data: orders,
+      data: ordersWithUser,
       total,
       page: Number(page),
       totalPages: Math.ceil(total / take),
