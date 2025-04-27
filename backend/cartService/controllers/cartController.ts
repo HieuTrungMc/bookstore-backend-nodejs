@@ -117,7 +117,7 @@ export const removeCartItem = async (
 };
 
 export const checkout = async (req: Request, res: Response): Promise<void> => {
-  const { userId } = req.body;
+  const { userId, address, paymentMethod  } = req.body;
   try {
     if (!userId) {
       res.status(400).json({ error: "Missing required field: userId" });
@@ -128,8 +128,8 @@ export const checkout = async (req: Request, res: Response): Promise<void> => {
       data: {
         user_id: userId,
         total: 0,
-        address: "",
-        payment_method: "",
+        address: address,
+        payment_method: paymentMethod,
       },
     });
 
@@ -176,6 +176,8 @@ export const checkout = async (req: Request, res: Response): Promise<void> => {
       success: true,
       data: {
         orderId: order.id,
+        address,
+        payment_method: paymentMethod,
         total,
         message: "Order placed successfully!",
       },
@@ -279,7 +281,7 @@ export const getOrderInfoById = async (
     });
 
     const userResponse = await axios.get(
-      `http://localhost:5000/user/accountid/${orders.user_id}`
+      `http://localhost:5000/user/user/${orders.user_id}`
     );
     const user = userResponse.data.user;
     const matchingAddress = user.addresses.find(
@@ -366,7 +368,7 @@ export const getAllOrder = async (
       orders.map(async (order: OrderItemType) => {
         try {
           const userResponse = await axios.get(
-            `http://localhost:5000/user/accountid/${order.user_id}`
+            `http://localhost:5000/user/user/${order.user_id}`
           );
           const user = userResponse.data.user;
 
