@@ -1,6 +1,7 @@
 import { Request, Response } from 'express';
 import prisma from '../prisma/client';
 import { hashPassword, comparePassword, generateToken } from '../utils/authUtils';
+import { Prisma, posts_status } from '@prisma/client';
 
 // Register a new user
 export const signup = async (req: Request, res: Response) => {
@@ -264,3 +265,148 @@ export const getCurrentUser = async (req: Request, res: Response) => {
     res.status(500).json({ message: 'Internal server error' });
   }
 };
+
+
+export const createPost = async(req: Request, res: Response):Promise<void> => {
+  const {title, category, content, userId} = req.body;
+  try{
+    const slug = title.toLowerCase().replace(/\s+/g, '-').substring(0, 50);
+    const post = await prisma.posts.create({
+      data: {
+        title,
+        slug,
+        category,
+        content,
+        user_id: userId,
+        created_at: new Date(),
+      },
+      include:{
+        users: true,
+      }
+    });
+    res.status(200).json({
+      success: true,
+      data: {
+        post,
+      },
+    });
+  } catch(error){
+    console.error(error);
+    res.status(500).json({ error: "Error when create posts" });
+  }
+}
+
+export const deletePost = async(req: Request, res: Response):Promise<void> => {
+  const { id } = req.params;
+  try{
+    const post = await prisma.posts.delete({
+      where: {
+        id: Number(id),
+      },
+    });
+    res.status(200).json({
+      success: true,
+      data: {
+        post,
+      },
+    });
+  } catch(error){
+    console.error(error);
+    res.status(500).json({ error: "Error when delete posts" });
+  }
+}
+
+export const updatePost = async(req: Request, res: Response):Promise<void> => {
+  const { id } = req.params;
+  const data = req.body;
+  try{
+    let updatedData = { ...data };
+    if (data.title) {
+      updatedData.slug = data.title.toLowerCase().replace(/\s+/g, '-').substring(0, 50);
+    }
+    updatedData.updated_at = new Date();
+    const post = await prisma.posts.update({
+      where: {
+        id: Number(id),
+      },
+      data: updatedData,
+
+    });
+    res.status(200).json({
+      success: true,
+      data: {
+        post,
+      },
+    });
+  } catch(error){
+    console.error(error);
+    res.status(500).json({ error: "Error when update posts" });
+  }
+}
+
+export const getAllPosts = async(req: Request, res: Response):Promise<void> => {
+  const {
+    sortBy = "",
+    sortOrder = "asc",
+    page = 1,
+    limit = 25,
+    search = "",
+  } = req.query;
+
+  try {
+    const skip = (Number(page) - 1) * Number(limit);
+    const take = Number(limit);
+    const sortOrderStr =
+      String(sortOrder).toLowerCase() === "asc" ? "asc" : "desc";
+    const findOptions: Prisma.postsFindManyArgs = {
+      skip,
+      take,
+      where: {},
+      include:{
+        users: true,
+      }
+    };
+    const validStatuses: posts_status[] = ["published", "draft"];
+    if (search) {
+      const searchConditions: any[] = [
+        {
+          title: {
+            contains: String(search),
+          },
+        },
+        {
+          category: {
+            contains: String(search),
+          },
+        },
+      ];
+      if (validStatuses.includes(search as posts_status)) {
+        searchConditions.push({
+          status: search as posts_status,
+        });
+      }
+      findOptions.where = {
+        OR: searchConditions,
+      };
+    }
+    if (sortBy) {
+      findOptions.orderBy = {
+        [String(sortBy)]: sortOrderStr,
+      } as Prisma.postsOrderByWithRelationInput;
+    }
+    const posts = await prisma.posts.findMany(findOptions);
+    const total = await prisma.posts.count({
+      where: findOptions.where,
+    });
+    res.status(200).json({
+      success: true,
+      data: posts,
+      total,
+      page: Number(page),
+      totalPages: Math.ceil(total / take),
+    });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: "Error when fetch all posts" });
+  }
+}

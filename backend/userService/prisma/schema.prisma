@@ -17,6 +17,7 @@ model users {
   status    Int?        @db.TinyInt
   role      String?     @default("member") @db.VarChar(50)
   addresses addresses[]
+  posts     posts[]
 }
 
 model addresses {
@@ -28,4 +29,24 @@ model addresses {
   user           users?  @relation(fields: [user_id], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "addresses_ibfk_1")
 
   @@index([user_id], map: "user_id")
+}
+
+model posts {
+  id         Int           @id @default(autoincrement())
+  title      String        @db.VarChar(100)
+  slug       String        @db.VarChar(255)
+  content    String        @db.Text
+  category   String?       @db.VarChar(100)
+  created_at DateTime?     @db.Timestamp(0)
+  updated_at DateTime?     @db.Timestamp(0)
+  status     posts_status? @default(draft)
+  user_id    Int?
+  users      users?        @relation(fields: [user_id], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "posts_ibfk_1")
+
+  @@index([user_id], map: "user_id")
+}
+
+enum posts_status {
+  published
+  draft
 }
