@@ -1,9 +1,9 @@
 import express from 'express';
-import { signup, login, getAccountInfo, changePassword, getCurrentUser, getUserById } from '../controllers/userController';
+import { signup, login, getAccountInfo, changePassword, getCurrentUser, getUserById, getAllPosts, createPost, deletePost, updatePost, uploadImage, getAllAttachments } from '../controllers/userController';
 import { authenticateToken } from '../middleware/authMiddleware';
 
 const router = express.Router();
-
+import upload from "../middleware/upload";
 // Public routes
 router.post('/signup', async (req, res, next) => {
   try {
@@ -20,6 +20,15 @@ router.post('/login', async (req, res, next) => {
     next(error);
   }
 });
+
+router.get('/allpost', getAllPosts)
+
+router.post('/createpost', createPost)
+
+router.post('/deletepost/:id', deletePost)
+
+router.post('/updatepost/:id',updatePost)
+
 
 router.get('/account/:email', async (req, res, next) => {
   try {
@@ -54,6 +63,23 @@ router.get('/profile', (req, res, next) => {
 }, async (req, res, next) => {
   try {
     await getCurrentUser(req, res);
+  } catch (error) {
+    next(error);
+  }
+});
+
+// Updated route to include userId as a path parameter
+router.post('/upload/:id', upload, async (req, res, next) => {
+  try {
+    await uploadImage(req, res);
+  } catch (error) {
+    next(error);
+  }
+});
+
+router.get('/uploads', async (req, res, next) => {
+  try {
+    await getAllAttachments(req, res);
   } catch (error) {
     next(error);
   }

@@ -1,7 +1,8 @@
 import { Request, Response } from 'express';
 import prisma from '../prisma/client';
 import { hashPassword, comparePassword, generateToken } from '../utils/authUtils';
-
+import { Prisma, posts_status } from '@prisma/client';
+import {uploadFile} from '../utils/uploadUtils';
 // Register a new user
 export const signup = async (req: Request, res: Response) => {
   try {
@@ -262,5 +263,268 @@ export const getCurrentUser = async (req: Request, res: Response) => {
   } catch (error) {
     console.error('Get current user error:', error);
     res.status(500).json({ message: 'Internal server error' });
+  }
+};
+
+export const uploadImage = async (req: Request, res: Response) => {
+    try {
+  const { id } = req.params;
+    const image = req.file;
+
+    if (!id) {
+      return res.status(400).json({ message: 'User ID is required' });
+    }
+
+    const userId = parseInt(id, 10);
+
+    if (isNaN(userId)) {
+      return res.status(400).json({ message: 'Invalid user ID format' });
+    }
+
+    // Check if user exists
+    const user = await prisma.users.findUnique({
+      where: { id: userId }
+    });
+
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+
+    if (!image) {
+      return res.status(400).json({ message: 'No image file provided' });
+    }
+
+    // Upload the file to S3 and get the URL
+    const imageUrl = await uploadFile(image);
+
+    // Save attachment information to the database
+    const attachment = await prisma.attachments.create({
+      data: {
+        user_id: userId,
+        file_name: image.originalname,
+        file_url: imageUrl
+      }
+    });
+
+    // Update user's avatar if needed
+    await prisma.users.update({
+      where: { id: userId },
+      data: { avatar: imageUrl }
+    });
+    res.status(200).json({
+      ok: 1,
+      message: 'File uploaded successfully',
+      attachment: {
+        id: attachment.id,
+        fileName: attachment.file_name,
+        fileUrl: attachment.file_url,
+        userId: attachment.user_id
+      }
+    });
+  } catch (error: any) {
+    console.error('Upload image error:', error);
+    res.status(400).json({ ok: 0, message: `Error uploading image: ${error.message}` });
+  }
+    };
+
+
+export const createPost = async(req: Request, res: Response):Promise<void> => {
+  const {title, category, content, userId} = req.body;
+  try{
+    const slug = title.toLowerCase().replace(/\s+/g, '-').substring(0, 50);
+    const post = await prisma.posts.create({
+      data: {
+        title,
+        slug,
+        category,
+        content,
+        user_id: userId,
+        created_at: new Date(),
+      },
+      include:{
+        users: true,
+      }
+    });
+    res.status(200).json({
+      success: true,
+      data: {
+        post,
+      },
+    });
+  } catch(error){
+    console.error(error);
+    res.status(500).json({ error: "Error when create posts" });
+  }
+}
+
+export const deletePost = async(req: Request, res: Response):Promise<void> => {
+  const { id } = req.params;
+  try{
+    const post = await prisma.posts.delete({
+      where: {
+        id: Number(id),
+      },
+    });
+    res.status(200).json({
+      success: true,
+      data: {
+        post,
+      },
+    });
+  } catch(error){
+    console.error(error);
+    res.status(500).json({ error: "Error when delete posts" });
+  }
+}
+
+export const updatePost = async(req: Request, res: Response):Promise<void> => {
+  const { id } = req.params;
+  const data = req.body;
+  try{
+    let updatedData = { ...data };
+    if (data.title) {
+      updatedData.slug = data.title.toLowerCase().replace(/\s+/g, '-').substring(0, 50);
+    }
+    updatedData.updated_at = new Date();
+    const post = await prisma.posts.update({
+      where: {
+        id: Number(id),
+      },
+      data: updatedData,
+
+    });
+    res.status(200).json({
+      success: true,
+      data: {
+        post,
+      },
+    });
+  } catch(error){
+    console.error(error);
+    res.status(500).json({ error: "Error when update posts" });
+  }
+}
+
+export const getAllPosts = async(req: Request, res: Response):Promise<void> => {
+  const {
+    sortBy = "",
+    sortOrder = "asc",
+    page = 1,
+    limit = 25,
+    search = "",
+  } = req.query;
+
+  try {
+    const skip = (Number(page) - 1) * Number(limit);
+    const take = Number(limit);
+    const sortOrderStr =
+      String(sortOrder).toLowerCase() === "asc" ? "asc" : "desc";
+    const findOptions: Prisma.postsFindManyArgs = {
+      skip,
+      take,
+      where: {},
+      include:{
+        users: true,
+      }
+    };
+    const validStatuses: posts_status[] = ["published", "draft"];
+    if (search) {
+      const searchConditions: any[] = [
+        {
+          title: {
+            contains: String(search),
+          },
+        },
+        {
+          category: {
+            contains: String(search),
+          },
+        },
+      ];
+      if (validStatuses.includes(search as posts_status)) {
+        searchConditions.push({
+          status: search as posts_status,
+        });
+      }
+      findOptions.where = {
+        OR: searchConditions,
+      };
+    }
+    if (sortBy) {
+      findOptions.orderBy = {
+        [String(sortBy)]: sortOrderStr,
+      } as Prisma.postsOrderByWithRelationInput;
+    }
+    const posts = await prisma.posts.findMany(findOptions);
+    const total = await prisma.posts.count({
+      where: findOptions.where,
+    });
+    res.status(200).json({
+      success: true,
+      data: posts,
+      total,
+      page: Number(page),
+      totalPages: Math.ceil(total / take),
+    });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: "Error when fetch all posts" });
+  }
+}
+
+export const getAllAttachments = async (req: Request, res: Response) => {
+  try {
+    // Get query parameters for pagination
+    const page = parseInt(req.query.page as string) || 1;
+    const limit = parseInt(req.query.limit as string) || 10;
+
+    // Calculate skip value for pagination
+    const skip = (page - 1) * limit;
+
+    // Get total count of attachments
+    const totalCount = await prisma.attachments.count();
+
+    // Get attachments with pagination and include user information
+    const attachments = await prisma.attachments.findMany({
+      skip,
+      take: limit,
+      orderBy: {
+        created_at: 'desc' // Most recent first
+      },
+      include: {
+        users: {
+          select: {
+            id: true,
+            username: true,
+            name: true,
+            email: true,
+            avatar: true
+          }
+        }
+      }
+    });
+
+    // Calculate total pages
+    const totalPages = Math.ceil(totalCount / limit);
+
+    res.status(200).json({
+      success: true,
+      data: attachments,
+      pagination: {
+        total: totalCount,
+        page,
+        limit,
+        totalPages,
+        hasNextPage: page < totalPages,
+        hasPrevPage: page > 1
+      }
+    });
+  } catch (error) {
+    console.error('Get all attachments error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Error retrieving attachments',
+      error: (error as Error).message
+    });
   }
 };
