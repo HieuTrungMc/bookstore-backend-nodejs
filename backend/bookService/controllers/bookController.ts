@@ -404,7 +404,7 @@ export const fetchAllCategories = async (
   res: Response
 ): Promise<void> => {
   try {
-    const { sortBy = "", sortOrder = "asc", page = 1, limit = 25, search="" } = req.query;
+    const { sortBy = "", sortOrder = "asc", page = 1, limit = 25, search = "" } = req.query;
     const skip = (Number(page) - 1) * Number(limit);
     const take = Number(limit);
     const sortOrderStr =
@@ -517,5 +517,28 @@ export const deleteCategoryById = async (
     res
       .status(500)
       .json({ success: false, message: "Failed to delete category." });
+  }
+};
+
+export const getCategoryById = async (
+  req: Request,
+  res: Response
+): Promise<void> => {
+  const { categoryId } = req.params;
+
+  try {
+    const category = await prisma.categories.findUnique({
+      where: { id: Number(categoryId) },
+    });
+    if (!category) {
+      res
+        .status(404)
+        .json({ success: false, message: "Category not found." });
+      return;
+    }
+    res.status(200).json({ success: true, data: category });
+  } catch (error) {
+    console.error("Error getting category by ID:", error);
+    res.status(500).json({ success: false, message: "Failed to get category." });
   }
 };
