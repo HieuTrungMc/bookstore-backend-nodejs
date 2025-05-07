@@ -184,6 +184,55 @@ export const getUserById = async (req: Request, res: Response) => {
   }
 };
 
+export const getAllAdressByUserId = async (req:Request, res: Response):Promise<void> => {
+  const {userId} = req.params
+  try {
+    if(!userId){
+      res.status(200).json({message: "User Id is required"})
+      return;
+    }
+    const address = await prisma.addresses.findMany({
+      where:{user_id:Number(userId)}
+    })
+    res.status(200).json({
+      success: true,
+      data: {
+        address,
+      },
+    });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: "Error when get all address" });
+  }
+}
+
+export const addNewAddress = async (req: Request, res: Response):Promise<void> => {
+  const {address, receiverName, receiverPhone, userId} = req.body
+  try {
+    if(!userId) {
+      res.status(200).json({message: "User Id is required"})
+      return;
+    }
+    const newAddress = await prisma.addresses.create({
+      data:{
+        user_id:userId,
+        receiver_name: receiverName,
+        receiver_phone: receiverPhone,
+        address:address,
+      }
+    })
+    res.status(200).json({
+      success: true,
+      data: {
+        newAddress,
+      },
+    });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: "Error when create new address" });
+  }
+} 
+
 // Change password
 export const changePassword = async (req: Request, res: Response) => {
   try {
@@ -267,7 +316,7 @@ export const getCurrentUser = async (req: Request, res: Response) => {
 };
 
 export const uploadImage = async (req: Request, res: Response) => {
-    try {
+   try {
   const { id } = req.params;
     const image = req.file;
 
