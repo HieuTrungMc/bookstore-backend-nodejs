@@ -1,5 +1,5 @@
 import express from 'express';
-import { signup, login, getAccountInfo, changePassword, getCurrentUser, getUserById, getAllPosts, createPost, deletePost, updatePost, uploadImage, getAllAttachments } from '../controllers/userController';
+import { signup, login, getAccountInfo, changePassword, getCurrentUser, getUserById, getAllPosts, createPost, deletePost, updatePost, uploadImage, getAllAttachments, addNewAddress, getAllAdressByUserId } from '../controllers/userController';
 import { authenticateToken } from '../middleware/authMiddleware';
 
 const router = express.Router();
@@ -23,12 +23,11 @@ router.post('/login', async (req, res, next) => {
 
 router.get('/allpost', getAllPosts)
 
+router.post('/addnewaddress', addNewAddress)
 router.post('/createpost', createPost)
-
 router.post('/deletepost/:id', deletePost)
-
 router.post('/updatepost/:id',updatePost)
-
+router.get('/alladdress/:userId',getAllAdressByUserId)
 
 router.get('/account/:email', async (req, res, next) => {
   try {
