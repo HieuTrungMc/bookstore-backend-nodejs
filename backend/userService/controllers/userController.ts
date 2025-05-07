@@ -316,7 +316,7 @@ export const getCurrentUser = async (req: Request, res: Response) => {
 };
 
 export const uploadImage = async (req: Request, res: Response) => {
-  /*   try {
+   try {
   const { id } = req.params;
     const image = req.file;
 
@@ -373,7 +373,7 @@ export const uploadImage = async (req: Request, res: Response) => {
   } catch (error: any) {
     console.error('Upload image error:', error);
     res.status(400).json({ ok: 0, message: `Error uploading image: ${error.message}` });
-  } */
+  }
     };
 
 
