@@ -257,8 +257,24 @@ export const updateAddress = async (req: Request, res: Response) => {
 
     res.status(200).json(updatedAddress);
   } catch (error) {
-    console.error('Error updating address:', error);
+    console.error('Error updating address: ', error);
     res.status(500).json({ message: 'Failed to update address' });
+  }
+};
+
+// Delete Address
+export const deleteAddress = async (req: Request, res: Response) => {
+  const { addressId } = req.params;
+
+  try {
+    const deletedAddress = await prisma.addresses.delete({
+      where: {
+        id: Number(addressId),
+      },
+    });
+    res.status(200).json(deletedAddress);
+  } catch (error) {
+    res.status(500).json({ message: 'Error deleting address: ', error });
   }
 };
 

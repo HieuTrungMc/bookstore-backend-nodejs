@@ -14,6 +14,7 @@ import {
   getAllAttachments,
   addNewAddress,
   updateAddress,
+  deleteAddress,
   getAllAdressByUserId
 } from '../controllers/userController';
 import { authenticateToken } from '../middleware/authMiddleware';
@@ -41,7 +42,8 @@ router.post('/login', async (req, res, next) => {
 router.get('/allpost', getAllPosts)
 
 router.post('/addnewaddress', addNewAddress)
-router.put('/updateaddress/:addressId', updateAddress);
+router.post('/updateaddress/:addressId', updateAddress)
+router.post('/deleteaddressy/:addressId', deleteAddress)
 router.post('/createpost', createPost)
 router.post('/deletepost/:id', deletePost)
 router.post('/updatepost/:id', updatePost)
