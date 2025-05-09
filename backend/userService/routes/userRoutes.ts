@@ -43,7 +43,7 @@ router.get('/allpost', getAllPosts)
 
 router.post('/addnewaddress', addNewAddress)
 router.put('/updateaddress/:addressId', updateAddress)
-router.post('/deleteaddressy/:addressId', deleteAddress)
+router.post('/deleteaddress/:addressId', deleteAddress)
 router.post('/createpost', createPost)
 router.post('/deletepost/:id', deletePost)
 router.post('/updatepost/:id', updatePost)
