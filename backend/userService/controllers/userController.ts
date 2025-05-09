@@ -237,20 +237,13 @@ export const addNewAddress = async (req: Request, res: Response): Promise<void> 
 
 // Update Address
 export const updateAddress = async (req: Request, res: Response) => {
-  const { userId } = req.body;
   const { addressId } = req.params;
   const updateData = req.body;
 
   try {
-    if (!userId) {
-      res.status(200).json({ message: "User Id is required" })
-      return;
-    }
-
     const updatedAddress = await prisma.addresses.update({
       where: {
         id: Number(addressId),
-        user_id: Number(userId),
       },
       data: updateData,
     });
