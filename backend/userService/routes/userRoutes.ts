@@ -1,9 +1,26 @@
 import express from 'express';
-import { signup, login, getAccountInfo, changePassword, getCurrentUser, getUserById, getAllPosts, createPost, deletePost, updatePost, uploadImage, getAllAttachments, addNewAddress, getAllAdressByUserId } from '../controllers/userController';
+import {
+  signup,
+  login,
+  getAccountInfo,
+  changePassword,
+  getCurrentUser,
+  getUserById,
+  getAllPosts,
+  createPost,
+  deletePost,
+  updatePost,
+  uploadImage,
+  getAllAttachments,
+  addNewAddress,
+  updateAddress,
+  getAllAdressByUserId
+} from '../controllers/userController';
 import { authenticateToken } from '../middleware/authMiddleware';
+import upload from "../middleware/upload";
 
 const router = express.Router();
-import upload from "../middleware/upload";
+
 // Public routes
 router.post('/signup', async (req, res, next) => {
   try {
@@ -24,10 +41,11 @@ router.post('/login', async (req, res, next) => {
 router.get('/allpost', getAllPosts)
 
 router.post('/addnewaddress', addNewAddress)
+router.put('/updateaddress/:addressId', updateAddress);
 router.post('/createpost', createPost)
 router.post('/deletepost/:id', deletePost)
-router.post('/updatepost/:id',updatePost)
-router.get('/alladdress/:userId',getAllAdressByUserId)
+router.post('/updatepost/:id', updatePost)
+router.get('/alladdress/:userId', getAllAdressByUserId)
 
 router.get('/account/:email', async (req, res, next) => {
   try {

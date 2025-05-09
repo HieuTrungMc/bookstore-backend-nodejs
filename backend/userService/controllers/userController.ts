@@ -235,6 +235,33 @@ export const addNewAddress = async (req: Request, res: Response): Promise<void> 
   }
 }
 
+// Update Address
+export const updateAddress = async (req: Request, res: Response) => {
+  const { userId } = req.body;
+  const { addressId } = req.params;
+  const updateData = req.body;
+
+  try {
+    if (!userId) {
+      res.status(200).json({ message: "User Id is required" })
+      return;
+    }
+
+    const updatedAddress = await prisma.addresses.update({
+      where: {
+        id: Number(addressId),
+        user_id: Number(userId),
+      },
+      data: updateData,
+    });
+
+    res.status(200).json(updatedAddress);
+  } catch (error) {
+    console.error('Error updating address:', error);
+    res.status(500).json({ message: 'Failed to update address' });
+  }
+};
+
 // Change password
 export const changePassword = async (req: Request, res: Response) => {
   try {
