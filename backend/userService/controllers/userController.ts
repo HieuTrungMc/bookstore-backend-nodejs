@@ -186,6 +186,7 @@ export const getUserById = async (req: Request, res: Response) => {
   }
 };
 
+// Get all addresses by user id
 export const getAllAdressByUserId = async (req: Request, res: Response): Promise<void> => {
   const { userId } = req.params
   try {
@@ -208,6 +209,28 @@ export const getAllAdressByUserId = async (req: Request, res: Response): Promise
   }
 }
 
+// Update user information
+export const updateUser = async (req: Request, res: Response) => {
+  const { id } = req.params;
+  const { username, name, email } = req.body;
+
+  try {
+    const updatedUser = await prisma.users.update({
+      where: { id: parseInt(id) },
+      data: {
+        username,
+        name,
+        email,
+      },
+    });
+    res.json(updatedUser);
+  } catch (error) {
+    console.error("Error updating user:", error);
+    res.status(500).json({ error: "Could not update user" });
+  }
+};
+
+// Add a new address
 export const addNewAddress = async (req: Request, res: Response): Promise<void> => {
   const { address, receiverName, receiverPhone, userId } = req.body
   try {
@@ -353,6 +376,7 @@ export const getCurrentUser = async (req: Request, res: Response) => {
   }
 };
 
+// Upload Image
 export const uploadImage = async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
@@ -414,7 +438,7 @@ export const uploadImage = async (req: Request, res: Response) => {
   }
 };
 
-
+// Create a new Post
 export const createPost = async (req: Request, res: Response): Promise<void> => {
   const { title, category, content, userId } = req.body;
   try {
@@ -444,6 +468,7 @@ export const createPost = async (req: Request, res: Response): Promise<void> => 
   }
 }
 
+// Delete a Post
 export const deletePost = async (req: Request, res: Response): Promise<void> => {
   const { id } = req.params;
   try {
@@ -464,6 +489,7 @@ export const deletePost = async (req: Request, res: Response): Promise<void> => 
   }
 }
 
+// Update an Existing Post
 export const updatePost = async (req: Request, res: Response): Promise<void> => {
   const { id } = req.params;
   const data = req.body;
@@ -492,6 +518,7 @@ export const updatePost = async (req: Request, res: Response): Promise<void> => 
   }
 }
 
+// Get All Posts
 export const getAllPosts = async (req: Request, res: Response): Promise<void> => {
   const {
     sortBy = "",
@@ -514,7 +541,7 @@ export const getAllPosts = async (req: Request, res: Response): Promise<void> =>
         users: true,
       }
     };
-    const validStatuses: posts_status[] = ["published", "draft"];
+    const validStatuses: posts_status[] = [ "published", "draft" ];
     if (search) {
       const searchConditions: any[] = [
         {
@@ -539,7 +566,7 @@ export const getAllPosts = async (req: Request, res: Response): Promise<void> =>
     }
     if (sortBy) {
       findOptions.orderBy = {
-        [String(sortBy)]: sortOrderStr,
+        [ String(sortBy) ]: sortOrderStr,
       } as Prisma.postsOrderByWithRelationInput;
     }
     const posts = await prisma.posts.findMany(findOptions);
@@ -559,6 +586,7 @@ export const getAllPosts = async (req: Request, res: Response): Promise<void> =>
   }
 }
 
+// Get All Attachments
 export const getAllAttachments = async (req: Request, res: Response) => {
   try {
     // Get query parameters for pagination
