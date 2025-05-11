@@ -12,6 +12,7 @@ import {
   updatePost,
   uploadImage,
   getAllAttachments,
+  updateUser,
   addNewAddress,
   updateAddress,
   deleteAddress,
@@ -40,7 +41,7 @@ router.post('/login', async (req, res, next) => {
 });
 
 router.get('/allpost', getAllPosts)
-
+router.put('/updateuser/:id', updateUser)
 router.post('/addnewaddress', addNewAddress)
 router.put('/updateaddress/:addressId', updateAddress)
 router.post('/deleteaddress/:addressId', deleteAddress)
