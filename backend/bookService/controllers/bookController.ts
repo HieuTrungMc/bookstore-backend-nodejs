@@ -49,7 +49,7 @@ export const fetchAllBooks = async (
     }
     if (sortBy) {
       findOptions.orderBy = {
-        [String(sortBy)]: sortOrderStr,
+        [ String(sortBy) ]: sortOrderStr,
       } as Prisma.booksOrderByWithRelationInput;
     }
     const books = await prisma.books.findMany(findOptions);
@@ -101,7 +101,7 @@ export const fetchBooksByCategory = async (
     };
     if (sortBy) {
       findOptions.orderBy = {
-        [String(sortBy)]: sortOrderStr,
+        [ String(sortBy) ]: sortOrderStr,
       } as Prisma.booksOrderByWithRelationInput;
     }
     const books = await prisma.books.findMany(findOptions);
@@ -213,6 +213,26 @@ export const fetchBookDetails = async (
     res
       .status(500)
       .json({ success: false, message: "Failed to fetch book details." });
+  }
+};
+
+export const fetchAllPublishers = async (req: Request, res: Response) => {
+  try {
+    const publishers = await prisma.publishers.findMany();
+    res.status(200).json(publishers);
+  } catch (error) {
+    console.error("Error fetching publishers:", error);
+    res.status(500).json({ message: "An error occurred while fetching publishers." });
+  }
+};
+
+export const fetchAllDiscounts = async (req: Request, res: Response) => {
+  try {
+    const discounts = await prisma.discounts.findMany();
+    res.status(200).json(discounts);
+  } catch (error) {
+    console.error("Error fetching discounts:", error);
+    res.status(500).json({ message: "An error occurred while fetching discounts." });
   }
 };
 
@@ -370,7 +390,7 @@ export const searchBooks = async (
     const sortField = String(sort);
     if (sortField) {
       findOptions.orderBy = {
-        [sortField]: sortOrder,
+        [ sortField ]: sortOrder,
       } as Prisma.booksOrderByWithRelationInput;
     }
 
@@ -428,7 +448,7 @@ export const fetchAllCategories = async (
     }
     if (sortBy) {
       findOptions.orderBy = {
-        [String(sortBy)]: sortOrderStr,
+        [ String(sortBy) ]: sortOrderStr,
       } as Prisma.categoriesOrderByWithRelationInput;
     }
     const categories = await prisma.categories.findMany(findOptions);
