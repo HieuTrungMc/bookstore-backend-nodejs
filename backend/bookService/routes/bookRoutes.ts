@@ -4,12 +4,18 @@ import {
     createNewCategory,
     deleteBookById,
     deleteCategoryById,
-    fetchAllBooks, fetchAllCategories, fetchBookDetails, fetchBooksByCategory, fetchNewArrivals, fetchRecommendations,
+    fetchAllBooks,
+    fetchAllCategories,
+    fetchBookDetails,
+    fetchBooksByCategory,
+    fetchNewArrivals,
+    fetchRecommendations,
     searchBooks,
     updateBookById,
     updateCategoryById,
     getCategoryById,
-    fetchAllPublishers
+    fetchAllPublishers,
+    fetchAllDiscounts
 } from "../controllers/bookController";
 
 const router = express.Router();
@@ -17,6 +23,7 @@ const router = express.Router();
 router.get('/all', fetchAllBooks);
 router.get('/allcategory', fetchAllCategories)
 router.get('/allpublishers', fetchAllPublishers)
+router.get('/alldiscounts', fetchAllDiscounts)
 router.post('/createbook', createNewBook)
 router.post('/createcategory', createNewCategory)
 router.post('/deletebook/:bookId', deleteBookById)

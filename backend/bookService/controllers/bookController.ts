@@ -226,6 +226,16 @@ export const fetchAllPublishers = async (req: Request, res: Response) => {
   }
 };
 
+export const fetchAllDiscounts = async (req: Request, res: Response) => {
+  try {
+    const discounts = await prisma.discounts.findMany();
+    res.status(200).json(discounts);
+  } catch (error) {
+    console.error("Error fetching discounts:", error);
+    res.status(500).json({ message: "An error occurred while fetching discounts." });
+  }
+};
+
 export const createNewBook = async (
   req: Request,
   res: Response
