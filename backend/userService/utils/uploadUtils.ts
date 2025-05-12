@@ -9,7 +9,19 @@ const randomString = (numberCharacter: number): string => {
   .substring(2, numberCharacter + 2)}`;
 };
 
-const FILE_TYPE_MATCH: string[] = ["image/png", "image/jpeg", "image/jpg", "image/gif"];
+const FILE_TYPE_MATCH: string[] = [
+  "image/png",
+  "image/jpeg",
+  "image/jpg",
+  "image/gif",
+  "image/webp",
+  "image/svg+xml",
+  "image/tiff",
+  "image/bmp",
+  "image/x-icon",
+  "image/heic",
+  "image/avif"
+];
 
 interface File {
   originalname: string;
