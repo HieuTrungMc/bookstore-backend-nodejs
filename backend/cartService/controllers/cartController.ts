@@ -19,7 +19,7 @@ export const addCartItem = async (
     }
 
     const bookRes = await axios.get(
-      `http://localhost:5000/book/details/${bookId}`
+      `${process.env.BOOKSERVICE_API_URL}/book/details/${bookId}`
     );
     const bookData = bookRes.data;
 
@@ -83,7 +83,7 @@ export const updateCartItemQuantity = async (
       return;
     }
     const bookRes = await axios.get(
-      `http://localhost:5000/book/details/${bookId}`
+      `${process.env.BOOKSERVICE_API_URL}/book/details/${bookId}`
     );
     const bookData = bookRes.data;
 
@@ -152,7 +152,7 @@ export const getAllCartItemsByUserId = async (
     const cartItemsWithBookData = await Promise.all(
       cartItems.map(async (item:CartItemType) => {
         try {
-          const bookRes = await axios.get(`http://localhost:5000/book/details/${item.book_id}`);
+          const bookRes = await axios.get(`${process.env.BOOKSERVICE_API_URL}/book/details/${item.book_id}`);
           const bookData = bookRes.data.data;
 
           const bookInfo = {
@@ -217,7 +217,7 @@ export const checkout = async (req: Request, res: Response): Promise<void> => {
     await Promise.all(
       cartItems.map(async (item: CartItemType) => {
         const bookRes = await axios.get(
-          `http://localhost:5000/book/details/${item.book_id}`
+          `${process.env.BOOKSERVICE_API_URL}/book/details/${item.book_id}`
         );
         const bookData = bookRes.data;
         const itemTotal = bookData.data.price * Number(item.quantity);
@@ -352,7 +352,7 @@ export const getOrderInfoById = async (
     });
 
     const userResponse = await axios.get(
-      `http://localhost:5000/user/user/${orders.user_id}`
+      `${process.env.BOOKSERVICE_API_URL}/user/user/${orders.user_id}`
     );
     const user = userResponse.data.user;
     const matchingAddress = user.addresses.find(
@@ -439,7 +439,7 @@ export const getAllOrder = async (
       orders.map(async (order: OrderItemType) => {
         try {
           const userResponse = await axios.get(
-            `http://localhost:5000/user/user/${order.user_id}`
+            `${process.env.BOOKSERVICE_API_URL}/user/user/${order.user_id}`
           );
           const user = userResponse.data.user;
 
