@@ -8,13 +8,15 @@ import {
     searchBooks,
     updateBookById,
     updateCategoryById,
-    getCategoryById
+    getCategoryById,
+    fetchAllPublishers
 } from "../controllers/bookController";
 
 const router = express.Router();
 
 router.get('/all', fetchAllBooks);
 router.get('/allcategory', fetchAllCategories)
+router.get('/allpublishers', fetchAllPublishers)
 router.post('/createbook', createNewBook)
 router.post('/createcategory', createNewCategory)
 router.post('/deletebook/:bookId', deleteBookById)
