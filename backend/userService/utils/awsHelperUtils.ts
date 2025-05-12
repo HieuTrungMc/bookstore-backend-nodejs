@@ -1,6 +1,8 @@
 import AWS from 'aws-sdk';
 import dotenv from 'dotenv';
 
+require('aws-sdk/lib/maintenance_mode_message').suppress = true;
+
 dotenv.config();
 
 const config: AWS.Config = new AWS.Config({
