@@ -2,7 +2,9 @@ import { Request, Response } from 'express';
 import prisma from '../prisma/client';
 import { hashPassword, comparePassword, generateToken } from '../utils/authUtils';
 import { Prisma, posts_status } from '@prisma/client';
-import {uploadFile} from '../utils/uploadUtils';
+import { uploadFile } from '../utils/uploadUtils';
+
+
 // Register a new user
 export const signup = async (req: Request, res: Response) => {
   try {
@@ -52,7 +54,7 @@ export const signup = async (req: Request, res: Response) => {
 
     // Return user data (excluding password) and token
     const { password: _, ...userData } = newUser;
-    
+
     res.status(201).json({
       message: 'User registered successfully',
       user: userData,
@@ -100,7 +102,7 @@ export const login = async (req: Request, res: Response) => {
 
     // Return user data (excluding password) and token
     const { password: _, ...userData } = user;
-    
+
     res.status(200).json({
       message: 'Login successful',
       user: userData,
@@ -135,7 +137,7 @@ export const getAccountInfo = async (req: Request, res: Response) => {
 
     // Return user data (excluding password)
     const { password, ...userData } = user;
-    
+
     res.status(200).json({
       user: userData
     });
@@ -170,7 +172,7 @@ export const getUserById = async (req: Request, res: Response) => {
 
     if (!user) {
       return res.status(404).json({ message: 'User not found' });
-  }
+    }
 
     // Return user data (excluding password)
     const { password, ...userData } = user;
@@ -181,6 +183,114 @@ export const getUserById = async (req: Request, res: Response) => {
   } catch (error) {
     console.error('Get user by ID error:', error);
     res.status(500).json({ message: 'Internal server error' });
+  }
+};
+
+// Get all addresses by user id
+export const getAllAdressByUserId = async (req: Request, res: Response): Promise<void> => {
+  const { userId } = req.params
+  try {
+    if (!userId) {
+      res.status(200).json({ message: "User Id is required" })
+      return;
+    }
+    const address = await prisma.addresses.findMany({
+      where: { user_id: Number(userId) }
+    })
+    res.status(200).json({
+      success: true,
+      data: {
+        address,
+      },
+    });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: "Error when get all address" });
+  }
+}
+
+// Update user information
+export const updateUser = async (req: Request, res: Response) => {
+  const { id } = req.params;
+  const { username, name, email } = req.body;
+
+  try {
+    const updatedUser = await prisma.users.update({
+      where: { id: parseInt(id) },
+      data: {
+        username,
+        name,
+        email,
+      },
+    });
+    res.json(updatedUser);
+  } catch (error) {
+    console.error("Error updating user:", error);
+    res.status(500).json({ error: "Could not update user" });
+  }
+};
+
+// Add a new address
+export const addNewAddress = async (req: Request, res: Response): Promise<void> => {
+  const { address, receiverName, receiverPhone, userId } = req.body
+  try {
+    if (!userId) {
+      res.status(200).json({ message: "User Id is required" })
+      return;
+    }
+    const newAddress = await prisma.addresses.create({
+      data: {
+        user_id: userId,
+        receiver_name: receiverName,
+        receiver_phone: receiverPhone,
+        address: address,
+      }
+    })
+    res.status(200).json({
+      success: true,
+      data: {
+        newAddress,
+      },
+    });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: "Error when create new address" });
+  }
+}
+
+// Update Address
+export const updateAddress = async (req: Request, res: Response) => {
+  const { addressId } = req.params;
+  const updateData = req.body;
+
+  try {
+    const updatedAddress = await prisma.addresses.update({
+      where: {
+        id: Number(addressId),
+      },
+      data: updateData,
+    });
+
+    res.status(200).json(updatedAddress);
+  } catch (error) {
+    console.error('Error updating address: ', error);
+    res.status(500).json({ message: 'Failed to update address' });
+  }
+};
+
+// Delete Address
+export const deleteAddress = async (req: Request, res: Response) => {
+  const { addressId } = req.params;
+
+  try {
+    const deletedAddress = await prisma.addresses.delete({
+      where: {
+        id: Number(addressId),
+      },
+    });
+    res.status(200).json(deletedAddress);
+  } catch (error) {
+    res.status(500).json({ message: 'Error deleting address: ', error });
   }
 };
 
@@ -266,9 +376,10 @@ export const getCurrentUser = async (req: Request, res: Response) => {
   }
 };
 
+// Upload Image
 export const uploadImage = async (req: Request, res: Response) => {
-    try {
-  const { id } = req.params;
+  try {
+    const { id } = req.params;
     const image = req.file;
 
     if (!id) {
@@ -325,12 +436,12 @@ export const uploadImage = async (req: Request, res: Response) => {
     console.error('Upload image error:', error);
     res.status(400).json({ ok: 0, message: `Error uploading image: ${error.message}` });
   }
-    };
+};
 
-
-export const createPost = async(req: Request, res: Response):Promise<void> => {
-  const {title, category, content, userId} = req.body;
-  try{
+// Create a new Post
+export const createPost = async (req: Request, res: Response): Promise<void> => {
+  const { title, category, content, userId } = req.body;
+  try {
     const slug = title.toLowerCase().replace(/\s+/g, '-').substring(0, 50);
     const post = await prisma.posts.create({
       data: {
@@ -341,7 +452,7 @@ export const createPost = async(req: Request, res: Response):Promise<void> => {
         user_id: userId,
         created_at: new Date(),
       },
-      include:{
+      include: {
         users: true,
       }
     });
@@ -351,15 +462,16 @@ export const createPost = async(req: Request, res: Response):Promise<void> => {
         post,
       },
     });
-  } catch(error){
+  } catch (error) {
     console.error(error);
     res.status(500).json({ error: "Error when create posts" });
   }
 }
 
-export const deletePost = async(req: Request, res: Response):Promise<void> => {
+// Delete a Post
+export const deletePost = async (req: Request, res: Response): Promise<void> => {
   const { id } = req.params;
-  try{
+  try {
     const post = await prisma.posts.delete({
       where: {
         id: Number(id),
@@ -371,16 +483,17 @@ export const deletePost = async(req: Request, res: Response):Promise<void> => {
         post,
       },
     });
-  } catch(error){
+  } catch (error) {
     console.error(error);
     res.status(500).json({ error: "Error when delete posts" });
   }
 }
 
-export const updatePost = async(req: Request, res: Response):Promise<void> => {
+// Update an Existing Post
+export const updatePost = async (req: Request, res: Response): Promise<void> => {
   const { id } = req.params;
   const data = req.body;
-  try{
+  try {
     let updatedData = { ...data };
     if (data.title) {
       updatedData.slug = data.title.toLowerCase().replace(/\s+/g, '-').substring(0, 50);
@@ -399,13 +512,14 @@ export const updatePost = async(req: Request, res: Response):Promise<void> => {
         post,
       },
     });
-  } catch(error){
+  } catch (error) {
     console.error(error);
     res.status(500).json({ error: "Error when update posts" });
   }
 }
 
-export const getAllPosts = async(req: Request, res: Response):Promise<void> => {
+// Get All Posts
+export const getAllPosts = async (req: Request, res: Response): Promise<void> => {
   const {
     sortBy = "",
     sortOrder = "asc",
@@ -423,11 +537,11 @@ export const getAllPosts = async(req: Request, res: Response):Promise<void> => {
       skip,
       take,
       where: {},
-      include:{
+      include: {
         users: true,
       }
     };
-    const validStatuses: posts_status[] = ["published", "draft"];
+    const validStatuses: posts_status[] = [ "published", "draft" ];
     if (search) {
       const searchConditions: any[] = [
         {
@@ -452,7 +566,7 @@ export const getAllPosts = async(req: Request, res: Response):Promise<void> => {
     }
     if (sortBy) {
       findOptions.orderBy = {
-        [String(sortBy)]: sortOrderStr,
+        [ String(sortBy) ]: sortOrderStr,
       } as Prisma.postsOrderByWithRelationInput;
     }
     const posts = await prisma.posts.findMany(findOptions);
@@ -472,6 +586,7 @@ export const getAllPosts = async(req: Request, res: Response):Promise<void> => {
   }
 }
 
+// Get All Attachments
 export const getAllAttachments = async (req: Request, res: Response) => {
   try {
     // Get query parameters for pagination
@@ -528,3 +643,37 @@ export const getAllAttachments = async (req: Request, res: Response) => {
     });
   }
 };
+
+export const getPostDetails = async (req: Request, res: Response):Promise<void> => {
+  const {
+    id="",
+    slug=""
+  } = req.query;
+  try {
+    const findOptions: Prisma.postsFindManyArgs = {
+      where: {
+      },
+      include: {
+        users: true,
+      }
+    };
+
+    if (id) {
+      findOptions.where = {
+        id: parseInt(id as string),
+      };
+    } else if (slug) {
+      findOptions.where = {
+        slug: slug as string,
+      };
+    }
+    const posts = await prisma.posts.findFirst(findOptions);
+    res.status(200).json({
+      success: true,
+      data: posts,
+    });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: "Error when fetch post details" });
+  }
+} 

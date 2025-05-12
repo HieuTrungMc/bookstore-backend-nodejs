@@ -75,19 +75,31 @@ export const updateCartItemQuantity = async (
   res: Response
 ): Promise<void> => {
   const cartItemId = parseInt(req.params.id);
-  const { finalQuantity } = req.body;
+  const { bookId, finalQuantity } = req.body;
   try {
     if (finalQuantity <= 0) {
       await prisma.cart_items.delete({ where: { id: cartItemId } });
       res.status(200).json({ success: true, message: "Cart item removed" });
       return;
     }
+    const bookRes = await axios.get(
+      `http://localhost:5000/book/details/${bookId}`
+    );
+    const bookData = bookRes.data;
 
+    const bookReviews = {
+      title: bookData.data.title,
+      price: bookData.data.price,
+      image: bookData.data.book_images[0].url,
+    };
     const updatedItem = await prisma.cart_items.update({
       where: { id: cartItemId },
       data: { quantity: finalQuantity, updated_at: new Date() },
     });
-    res.status(200).json({ success: true, data: updatedItem });
+    res.status(200).json({ success: true, data: {
+      ...updatedItem,
+      book: bookReviews,
+    } });
   } catch (error) {
     console.log(error);
     res.status(500).json({
@@ -113,6 +125,65 @@ export const removeCartItem = async (
     res
       .status(500)
       .json({ success: false, message: "Error when delete cart items" });
+  }
+};
+
+export const getAllCartItemsByUserId = async (
+  req: Request,
+  res: Response
+): Promise<void> => {
+  const userId = Number(req.params.userId);
+
+  if (!userId) {
+    res.status(400).json({ success: false, message: "Missing or invalid userId" });
+    return;
+  }
+
+  try {
+    const cartItems = await prisma.cart_items.findMany({
+      where: { user_id: userId },
+    });
+
+    if (cartItems.length === 0) {
+      res.status(200).json({ success: true, data: [] });
+      return;
+    }
+
+    const cartItemsWithBookData = await Promise.all(
+      cartItems.map(async (item:CartItemType) => {
+        try {
+          const bookRes = await axios.get(`http://localhost:5000/book/details/${item.book_id}`);
+          const bookData = bookRes.data.data;
+
+          const bookInfo = {
+            title: bookData.title,
+            price: bookData.price,
+            image: bookData.book_images?.[0]?.url || "",
+          };
+
+          return {
+            ...item,
+            book: bookInfo,
+          };
+        } catch (err) {
+          console.error(`Failed to fetch book ${item.book_id}`, err);
+          return {
+            ...item,
+            book: null,
+          };
+        }
+      })
+    );
+    res.status(200).json({
+      success: true,
+      data: cartItemsWithBookData,
+    });
+  } catch (error) {
+    console.error("Error fetching cart items:", error);
+    res.status(500).json({
+      success: false,
+      message: "Error when retrieving cart items",
+    });
   }
 };
 
