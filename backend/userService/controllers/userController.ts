@@ -643,3 +643,37 @@ export const getAllAttachments = async (req: Request, res: Response) => {
     });
   }
 };
+
+export const getPostDetails = async (req: Request, res: Response):Promise<void> => {
+  const {
+    id="",
+    slug=""
+  } = req.query;
+  try {
+    const findOptions: Prisma.postsFindManyArgs = {
+      where: {
+      },
+      include: {
+        users: true,
+      }
+    };
+
+    if (id) {
+      findOptions.where = {
+        id: parseInt(id as string),
+      };
+    } else if (slug) {
+      findOptions.where = {
+        slug: slug as string,
+      };
+    }
+    const posts = await prisma.posts.findFirst(findOptions);
+    res.status(200).json({
+      success: true,
+      data: posts,
+    });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: "Error when fetch post details" });
+  }
+} 
