@@ -9,9 +9,9 @@
   },
   "dependencies": {
     "cors": "^2.8.5",
+    "express": "^4.21.2",
     "helmet": "^8.1.0",
     "http-proxy-middleware": "^2.0.6",
-    "express": "^4.21.2",
     "ts-node": "^10.9.2"
   },
   "devDependencies": {
