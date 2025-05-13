@@ -261,13 +261,58 @@ export const updateBookById = async (
   const { bookId } = req.params;
   const data = req.body;
   try {
-    const book = await prisma.books.update({
+    // Extract images from the request body
+    const { images, ...bookData } = data;
+
+    // Start a transaction to ensure data consistency
+    const result = await prisma.$transaction(async (prismaClient) => {
+      // Update the book data
+      const updatedBook = await prismaClient.books.update({
       where: { id: Number(bookId) },
-      data: {
-        ...data,
-      },
+        data: bookData,
+      include: {
+          book_images: true,
+          categories: true,
+          publishers: true,
+          discounts: true,
+        }
+      });
+
+      // If images array is provided, update the book images
+      if (images && Array.isArray(images)) {
+        // First, delete all existing book images for this book
+        await prismaClient.book_images.deleteMany({
+          where: { book_id: Number(bookId) }
+        });
+
+        // Then, create new book images from the provided array
+        if (images.length > 0) {
+          await prismaClient.book_images.createMany({
+            data: images.map((imageUrl: string) => ({
+              book_id: Number(bookId),
+              url: imageUrl
+            }))
+          });
+        }
+
+        // Fetch the book again with updated images
+        const bookWithImages = await prismaClient.books.findUnique({
+          where: { id: Number(bookId) },
+          include: {
+            book_images: true,
+            categories: true,
+            publishers: true,
+            discounts: true,
+          }
+        });
+
+        return bookWithImages;
+      }
+
+      return updatedBook;
     });
-    res.status(200).json({ success: true, data: book });
+
+    res.status(200).json({ success: true, data: result });
   } catch (error) {
     console.error("Error updating book:", error);
     res.status(500).json({ success: false, message: "Failed to update book." });
@@ -339,7 +384,7 @@ export const searchBooks = async (
     if (publisher) {
       whereClause.publishers = {
         slug: String(publisher),
-      };
+};
     }
 
     // Filter by price range if provided
@@ -413,10 +458,10 @@ export const searchBooks = async (
   } catch (error) {
     console.error("Error searching books:", error);
     res.status(500).json({
-      success: false,
+        success: false,
       message: "An error occurred while searching for books.",
-    });
-  }
+      });
+    }
 };
 
 export const fetchAllCategories = async (
@@ -444,7 +489,7 @@ export const fetchAllCategories = async (
             },
           },
         ],
-      };
+};
     }
     if (sortBy) {
       findOptions.orderBy = {
