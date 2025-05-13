@@ -212,7 +212,7 @@ export const getAllAdressByUserId = async (req: Request, res: Response): Promise
 // Update user information
 export const updateUser = async (req: Request, res: Response) => {
   const { id } = req.params;
-  const { username, name, email } = req.body;
+  const { username, name, email, avatar } = req.body;
 
   try {
     const updatedUser = await prisma.users.update({
@@ -221,6 +221,7 @@ export const updateUser = async (req: Request, res: Response) => {
         username,
         name,
         email,
+        avatar
       },
     });
     res.json(updatedUser);
