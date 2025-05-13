@@ -644,6 +644,53 @@ export const getAllAttachments = async (req: Request, res: Response) => {
   }
 };
 
+// Get media by ID
+export const getMediaById = async (req: Request, res: Response) => {
+  try {
+    const { id } = req.params;
+    if (!id) {
+      return res.status(400).json({ message: 'Media ID is required' });
+    }
+
+    const mediaId = parseInt(id, 10);
+
+    if (isNaN(mediaId)) {
+      return res.status(400).json({ message: 'Invalid media ID format' });
+    }
+
+    // Find the attachment by ID
+    const media = await prisma.attachments.findUnique({
+      where: { id: mediaId },
+      include: {
+        users: {
+          select: {
+            id: true,
+            username: true,
+            name: true,
+            email: true,
+            avatar: true
+          }
+        }
+      }
+    });
+
+    if (!media) {
+      return res.status(404).json({ message: 'Media not found' });
+    }
+    res.status(200).json({
+      success: true,
+      data: media
+    });
+  } catch (error) {
+    console.error('Get media by ID error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Error retrieving media',
+      error: (error as Error).message
+    });
+  }
+};
+
 export const getPostDetails = async (req: Request, res: Response):Promise<void> => {
   const {
     id="",
@@ -676,4 +723,4 @@ export const getPostDetails = async (req: Request, res: Response):Promise<void> 
     console.error(error);
     res.status(500).json({ error: "Error when fetch post details" });
   }
-} 
+}

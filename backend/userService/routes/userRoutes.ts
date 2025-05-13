@@ -17,7 +17,8 @@ import {
   updateAddress,
   deleteAddress,
   getAllAdressByUserId,
-  getPostDetails
+  getPostDetails,
+  getMediaById
 } from '../controllers/userController';
 import { authenticateToken } from '../middleware/authMiddleware';
 import upload from "../middleware/upload";
@@ -94,6 +95,15 @@ router.get('/profile', (req, res, next) => {
 router.post('/upload/:id', upload, async (req, res, next) => {
   try {
     await uploadImage(req, res);
+  } catch (error) {
+    next(error);
+  }
+});
+
+// New route to get media by ID
+router.get('/upload/:id', async (req, res, next) => {
+  try {
+    await getMediaById(req, res);
   } catch (error) {
     next(error);
   }
