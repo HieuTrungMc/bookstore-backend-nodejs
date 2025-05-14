@@ -9,12 +9,13 @@ export const fetchAllBooks = async (
 ): Promise<void> => {
   try {
     const {
-      sortBy = "",
+      sortBy = "id",
       sortOrder = "asc",
       page = 1,
       limit = 25,
       search = "",
     } = req.query;
+
     const skip = (Number(page) - 1) * Number(limit);
     const take = Number(limit);
     const sortOrderStr =
@@ -31,6 +32,7 @@ export const fetchAllBooks = async (
       take,
       where: {},
     };
+
     if (search) {
       findOptions.where = {
         OR: [
@@ -47,15 +49,24 @@ export const fetchAllBooks = async (
         ],
       };
     }
+
     if (sortBy) {
-      findOptions.orderBy = {
-        [ String(sortBy) ]: sortOrderStr,
-      } as Prisma.booksOrderByWithRelationInput;
+      if (sortBy === 'sold') {
+        findOptions.orderBy = {
+          sold: sortOrderStr as Prisma.SortOrder,
+        };
+      } else {
+        findOptions.orderBy = {
+          [ String(sortBy) ]: sortOrderStr,
+        } as Prisma.booksOrderByWithRelationInput;
+      }
     }
+
     const books = await prisma.books.findMany(findOptions);
     const total = await prisma.books.count({
       where: findOptions.where,
     });
+
     res.status(200).json({
       success: true,
       data: books,
@@ -268,9 +279,9 @@ export const updateBookById = async (
     const result = await prisma.$transaction(async (prismaClient) => {
       // Update the book data
       const updatedBook = await prismaClient.books.update({
-      where: { id: Number(bookId) },
+        where: { id: Number(bookId) },
         data: bookData,
-      include: {
+        include: {
           book_images: true,
           categories: true,
           publishers: true,
@@ -384,7 +395,7 @@ export const searchBooks = async (
     if (publisher) {
       whereClause.publishers = {
         slug: String(publisher),
-};
+      };
     }
 
     // Filter by price range if provided
@@ -458,10 +469,10 @@ export const searchBooks = async (
   } catch (error) {
     console.error("Error searching books:", error);
     res.status(500).json({
-        success: false,
+      success: false,
       message: "An error occurred while searching for books.",
-      });
-    }
+    });
+  }
 };
 
 export const fetchAllCategories = async (
@@ -489,7 +500,7 @@ export const fetchAllCategories = async (
             },
           },
         ],
-};
+      };
     }
     if (sortBy) {
       findOptions.orderBy = {
