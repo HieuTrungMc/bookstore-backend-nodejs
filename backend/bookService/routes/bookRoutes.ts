@@ -29,7 +29,7 @@ router.post('/createcategory', createNewCategory)
 router.post('/deletebook/:bookId', deleteBookById)
 router.post('/updatebook/:bookId', updateBookById)
 router.post('/updatecategory/:categoryId', updateCategoryById)
-router.get('/category/:categoryId', getCategoryById)
+router.get('/category/categoryinfo/:categoryId', getCategoryById)
 router.post('/deletecategory/:categoryId', deleteCategoryById)
 router.get('/category/:categorySlug', fetchBooksByCategory);
 router.get('/new-arrivals/:categorySlug', fetchNewArrivals);
