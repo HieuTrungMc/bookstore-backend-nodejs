@@ -36,6 +36,9 @@ model books {
   category_id     Int?
   publisher_id    Int?
   sale_start_date DateTime      @default(now()) @db.Timestamp(0)
+  meta_title      String?       @db.VarChar(255)
+  meta_desc       String?       @db.VarChar(255)
+  keywords        String?       @db.VarChar(255)
   book_images     book_images[]
   discounts       discounts?    @relation(fields: [discount_id], references: [id], onUpdate: Restrict, map: "books_ibfk_1")
   publishers      publishers?   @relation(fields: [publisher_id], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "books_ibfk_2")
