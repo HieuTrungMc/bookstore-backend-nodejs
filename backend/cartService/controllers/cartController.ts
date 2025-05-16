@@ -3,7 +3,7 @@ import axios from "axios";
 import prisma from "../utils/prismaClient";
 import { Prisma, orders_status } from "@prisma/client";
 import { CartItemType } from "../models/CartType";
-import { OrderItemType } from "../models/OrderType";
+import { OrderItem, OrderType } from "../models/OrderType";
 
 export const addCartItem = async (
   req: Request,
@@ -378,23 +378,76 @@ export const getAllOrderInfoByUserId = async (
   req: Request,
   res: Response
 ): Promise<void> => {
-  const { userId } = req.body;
+  const {userId}  = req.params;
   try {
     if (!userId) {
       res.status(400).json({ error: "Missing required field: userId" });
       return;
     }
+    const {
+      sortBy = "",
+      sortOrder = "asc",
+      page = 1,
+      limit = 25,
+      search = "",
+    } = req.query;
+    const skip = (Number(page) - 1) * Number(limit);
+    const take = Number(limit);
+    const sortOrderStr =
+      String(sortOrder).toLowerCase() === "asc" ? "asc" : "desc";
+    const findOptions: Prisma.ordersFindManyArgs = {
+      skip,
+      take,
+      where: {user_id: Number(userId)},
+      include:{
+        order_items:true,
+      }
+    };
+    if (search) {
+      findOptions.where = {
+        ...findOptions.where,
+        status: search as orders_status,
+      };
+    }
+    if (sortBy) {
+      findOptions.orderBy = {
+        [String(sortBy)]: sortOrderStr,
+      } as Prisma.ordersOrderByWithRelationInput;
+    }
+    const orders = await prisma.orders.findMany(findOptions);
+    const enrichedOrders = await Promise.all(
+      orders.map(async (order:OrderType) => {
+        const enrichedItems = await Promise.all(
+          (order.order_items ?? []).map(async (item:OrderItem) => {
+            try {
+              const response = await axios.get(
+                `${process.env.BOOKSERVICE_API_URL}/book/details/${item.book_id}`
+              );
+              const { title, price } = response.data.data;
+              const image = response.data.data.book_images[0].url
+              
+              return {
+                ...item,
+                book_title: title,
+                book_image: image,
+                book_price: price,
+              };
+            } catch (err) {
+              console.error(`Error fetching book ${item.book_id}:`, err);
+              return item;
+            }
+          })
+        );
 
-    const orders = await prisma.orders.findMany({
-      where: { user_id: userId },
-      include: {
-        order_items: true,
-      },
-    });
-
+        return {
+          ...order,
+          order_items: enrichedItems,
+        };
+      })
+    );
     res.status(200).json({
       success: true,
-      data: orders,
+      data: enrichedOrders,
     });
   } catch (error) {
     console.error("Error fetching orders:", error);
@@ -436,7 +489,7 @@ export const getAllOrder = async (
     const orders = await prisma.orders.findMany(findOptions);
 
     const ordersWithUser = await Promise.all(
-      orders.map(async (order: OrderItemType) => {
+      orders.map(async (order: OrderType) => {
         try {
           const userResponse = await axios.get(
             `${process.env.BOOKSERVICE_API_URL}/user/user/${order.user_id}`
