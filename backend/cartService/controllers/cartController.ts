@@ -188,7 +188,7 @@ export const getAllCartItemsByUserId = async (
 };
 
 export const checkout = async (req: Request, res: Response): Promise<void> => {
-  const { userId, address, paymentMethod  } = req.body;
+  const { userId, address, paymentMethod, cartItemIds } = req.body;
   try {
     if (!userId) {
       res.status(400).json({ error: "Missing required field: userId" });
@@ -205,7 +205,7 @@ export const checkout = async (req: Request, res: Response): Promise<void> => {
     });
 
     const cartItems = await prisma.cart_items.findMany({
-      where: { user_id: userId },
+      where: { user_id: userId , id: {in:cartItemIds}},
     });
 
     if (cartItems.length === 0) {
