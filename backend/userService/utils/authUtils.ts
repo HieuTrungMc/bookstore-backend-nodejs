@@ -30,5 +30,5 @@ export const hashPassword = async (password: string): Promise<string> => {
 
 // Compare password with hash
 export const comparePassword = async (password: string, hash: string): Promise<boolean> => {
-  return password === hash;
+  return hashPassword(password) === hash;
 };
