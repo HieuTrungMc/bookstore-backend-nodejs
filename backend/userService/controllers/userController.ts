@@ -527,24 +527,18 @@ export const getAllPosts = async (req: Request, res: Response): Promise<void> =>
     page = 1,
     limit = 25,
     search = "",
+    status = "",
   } = req.query;
 
   try {
     const skip = (Number(page) - 1) * Number(limit);
     const take = Number(limit);
-    const sortOrderStr =
-      String(sortOrder).toLowerCase() === "asc" ? "asc" : "desc";
-    const findOptions: Prisma.postsFindManyArgs = {
-      skip,
-      take,
-      where: {},
-      include: {
-        users: true,
-      }
-    };
-    const validStatuses: posts_status[] = [ "published", "draft" ];
+    const sortOrderStr = String(sortOrder).toLowerCase() === "asc" ? "asc" : "desc";
+    const validStatuses: posts_status[] = ["published", "draft"];
+    const where: any = {};
+
     if (search) {
-      const searchConditions: any[] = [
+      where.OR = [
         {
           title: {
             contains: String(search),
@@ -556,24 +550,26 @@ export const getAllPosts = async (req: Request, res: Response): Promise<void> =>
           },
         },
       ];
-      if (validStatuses.includes(search as posts_status)) {
-        searchConditions.push({
-          status: search as posts_status,
-        });
-      }
-      findOptions.where = {
-        OR: searchConditions,
-      };
     }
+    if (status && validStatuses.includes(status as posts_status)) {
+      where.status = status;
+    }
+
+    const findOptions: Prisma.postsFindManyArgs = {
+      skip,
+      take,
+      where,
+      include: {
+        users: true,
+      },
+    };
     if (sortBy) {
       findOptions.orderBy = {
-        [ String(sortBy) ]: sortOrderStr,
+        [String(sortBy)]: sortOrderStr,
       } as Prisma.postsOrderByWithRelationInput;
     }
     const posts = await prisma.posts.findMany(findOptions);
-    const total = await prisma.posts.count({
-      where: findOptions.where,
-    });
+    const total = await prisma.posts.count({ where });
     res.status(200).json({
       success: true,
       data: posts,
@@ -583,9 +579,9 @@ export const getAllPosts = async (req: Request, res: Response): Promise<void> =>
     });
   } catch (error) {
     console.error(error);
-    res.status(500).json({ error: "Error when fetch all posts" });
+    res.status(500).json({ error: "Error when fetching all posts" });
   }
-}
+};
 
 // Get All Attachments
 export const getAllAttachments = async (req: Request, res: Response) => {
