@@ -66,7 +66,7 @@ app.use('/statistics/orders',
 
 app.use('/statistics/sales',
   createProxyMiddleware({
-    target: 'http://localhost:5001/',
+    target: 'http://localhost:5002/',
     changeOrigin: true,
   })
 );
