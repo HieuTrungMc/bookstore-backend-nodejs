@@ -7,85 +7,46 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-model addresses {
-  id             Int     @id @default(autoincrement())
-  user_id        Int?
-  address        String? @db.MediumText
-  receiver_name  String? @db.VarChar(255)
-  receiver_phone String? @db.VarChar(20)
-  users          users?  @relation(fields: [user_id], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "addresses_ibfk_1")
-
-  @@index([user_id], map: "user_id")
-}
-
 model book_images {
   id      Int     @id @default(autoincrement())
   book_id Int?
   url     String? @db.VarChar(255)
-  books   books?  @relation(fields: [book_id], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "book_images_ibfk_2")
+  books   books?  @relation(fields: [book_id], references: [id], onUpdate: NoAction, map: "book_images_ibfk_2")
 
   @@index([book_id], map: "book_id")
 }
 
 model books {
-  id              Int            @id @default(autoincrement())
-  title           String         @db.VarChar(255)
-  author          String?        @db.VarChar(255)
-  description     String?        @db.MediumText
-  price           Decimal?       @db.Decimal(10, 2)
-  import_price    Decimal?       @db.Decimal(10, 2)
+  id              Int           @id @default(autoincrement())
+  title           String        @db.VarChar(255)
+  author          String?       @db.VarChar(255)
+  description     String?       @db.MediumText
+  price           Decimal?      @db.Decimal(10, 2)
+  import_price    Decimal?      @db.Decimal(10, 2)
   stock           Int?
-  discount_id     Int
+  discount_id     Int?
   sold            Int?
-  status          Int?           @db.TinyInt
+  status          Int?          @db.TinyInt
   is_featured     Boolean?
   is_new          Boolean?
   pages           Int?
   publish_year    Int?
-  weight          Decimal?       @db.Decimal(10, 2)
-  size            String?        @db.VarChar(50)
+  weight          Decimal?      @db.Decimal(10, 2)
+  size            String?       @db.VarChar(50)
   category_id     Int?
   publisher_id    Int?
-  sale_start_date DateTime       @default(now()) @db.Timestamp(0)
+  sale_start_date DateTime      @default(now()) @db.Timestamp(0)
+  meta_title      String?       @db.VarChar(255)
+  meta_desc       String?       @db.VarChar(255)
+  keywords        String?       @db.VarChar(255)
   book_images     book_images[]
-  discounts       discounts      @relation(fields: [discount_id], references: [id], onUpdate: Restrict, map: "books_ibfk_1")
-  publishers      publishers?    @relation(fields: [publisher_id], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "books_ibfk_2")
-  categories      categories?    @relation(fields: [category_id], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "books_ibfk_3")
-  cart_details    cart_details[]
-  reviews         reviews[]
+  discounts       discounts?    @relation(fields: [discount_id], references: [id], onUpdate: Restrict, map: "books_ibfk_1")
+  publishers      publishers?   @relation(fields: [publisher_id], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "books_ibfk_2")
+  categories      categories?   @relation(fields: [category_id], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "books_ibfk_3")
 
   @@index([category_id], map: "category_id")
   @@index([discount_id], map: "discount_id")
   @@index([publisher_id], map: "publisher_id")
-}
-
-model cart {
-  id             Int            @id @default(autoincrement())
-  user_id        Int?
-  total          Decimal?       @db.Decimal(10, 2)
-  address        String?        @db.MediumText
-  status         String?        @db.VarChar(50)
-  payment_method String?        @db.VarChar(50)
-  users          users?         @relation(fields: [user_id], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "cart_ibfk_1")
-  cart_details   cart_details[]
-  receipt        receipt[]
-
-  @@index([user_id], map: "user_id")
-}
-
-model cart_details {
-  id       Int       @id @default(autoincrement())
-  cart_id  Int?
-  book_id  Int?
-  price    Decimal?  @db.Decimal(10, 2)
-  quantity Int?
-  status   Int       @db.TinyInt
-  books    books?    @relation(fields: [book_id], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "cart_details_ibfk_2")
-  cart     cart?     @relation(fields: [cart_id], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "cart_details_ibfk_3")
-  receipt  receipt[]
-
-  @@index([book_id], map: "book_id")
-  @@index([cart_id], map: "cart_id")
 }
 
 model categories {
@@ -116,39 +77,13 @@ model publishers {
   books       books[]
 }
 
-model receipt {
-  id              Int          @id @default(autoincrement())
-  cart_details_id Int
-  cart_id         Int
-  cart_details    cart_details @relation(fields: [cart_details_id], references: [id], onUpdate: Restrict, map: "receipt_ibfk_1")
-  cart            cart         @relation(fields: [cart_id], references: [id], onUpdate: Restrict, map: "receipt_ibfk_2")
-
-  @@index([cart_details_id], map: "cart_details_id")
-  @@index([cart_id], map: "cart_id")
-}
-
 model reviews {
   id      Int     @id @default(autoincrement())
   book_id Int?
   user_id Int?
   rating  Int?
   comment String? @db.MediumText
-  books   books?  @relation(fields: [book_id], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "reviews_ibfk_1")
-  users   users?  @relation(fields: [user_id], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "reviews_ibfk_2")
 
   @@index([book_id], map: "book_id")
   @@index([user_id], map: "user_id")
-}
-
-model users {
-  id        Int         @id @default(autoincrement())
-  username  String      @db.VarChar(255)
-  password  String      @db.VarChar(255)
-  name      String?     @db.VarChar(255)
-  email     String?     @db.VarChar(255)
-  avatar    String?     @db.VarChar(255)
-  status    Int?        @db.TinyInt
-  addresses addresses[]
-  cart      cart[]
-  reviews   reviews[]
 }
