@@ -18,7 +18,8 @@ import {
   deleteAddress,
   getAllAdressByUserId,
   getPostDetails,
-  getMediaById
+  getMediaById,
+  resetPassword
 } from '../controllers/userController';
 import { authenticateToken } from '../middleware/authMiddleware';
 import upload from "../middleware/upload";
@@ -37,6 +38,14 @@ router.post('/signup', async (req, res, next) => {
 router.post('/login', async (req, res, next) => {
   try {
     await login(req, res);
+  } catch (error) {
+    next(error);
+  }
+});
+
+router.post('/reset-password', async (req, res, next) => {
+  try {
+    await resetPassword(req, res);
   } catch (error) {
     next(error);
   }
