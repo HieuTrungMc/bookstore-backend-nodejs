@@ -29,6 +29,9 @@ app.use(
   createProxyMiddleware({
     target: 'http://168.138.168.177:8000/',
     changeOrigin: true,
+    pathRewrite: {
+      '^/chat': ''
+    },
   })
 );
 
@@ -51,7 +54,7 @@ app.use(
 // User statistics
 app.use('/statistics/users',
   createProxyMiddleware({
-    target: 'http://localhost:5003/',
+    target: 'http://localhost:5003',
     changeOrigin: true,
   })
 );
@@ -59,14 +62,14 @@ app.use('/statistics/users',
 // Order and sales statistics
 app.use('/statistics/orders',
   createProxyMiddleware({
-    target: 'http://localhost:5002/',
+    target: 'http://localhost:5002',
     changeOrigin: true,
   })
 );
 
 app.use('/statistics/sales',
   createProxyMiddleware({
-    target: 'http://localhost:5002/',
+    target: 'http://localhost:5002',
     changeOrigin: true,
   })
 );
@@ -74,7 +77,7 @@ app.use('/statistics/sales',
 // Book statistics
 app.use('/statistics/top-books',
   createProxyMiddleware({
-    target: 'http://localhost:5001/',
+    target: 'http://localhost:5001',
     changeOrigin: true,
   })
 );
@@ -83,18 +86,15 @@ app.get('/', (req, res) => {
   res.json({ message: 'API Gateway is running' });
 });
 
-// Start HTTP server (optional, you can remove this if you only want HTTPS)
 app.listen(PORT, () => {
   console.log(`API Gateway (HTTP) is running at http://localhost:${PORT}`);
 });
 
-// SSL options - paths to certificate files
 const httpsOptions = {
   key: fs.readFileSync(path.join(__dirname, 'certs', 'key.pem')),
   cert: fs.readFileSync(path.join(__dirname, 'certs', 'cert.pem'))
 };
 
-// Create HTTPS server
 https.createServer(httpsOptions, app).listen(HTTPS_PORT, () => {
   console.log(`API Gateway (HTTPS) is running at https://localhost:${HTTPS_PORT}`);
 });
