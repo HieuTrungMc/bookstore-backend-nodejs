@@ -14,11 +14,20 @@ const HTTPS_PORT = process.env.HTTPS_PORT || 5443;
 app.use(helmet());
 app.use(cors());
 
+
 // Proxy middleware setup
 app.use(
   '/book',
   createProxyMiddleware({
     target: 'http://localhost:5001',
+    changeOrigin: true,
+  })
+);
+
+app.use(
+  '/chat',
+  createProxyMiddleware({
+    target: 'http://168.138.168.177:8000/',
     changeOrigin: true,
   })
 );
@@ -35,6 +44,37 @@ app.use(
   '/user',
   createProxyMiddleware({
     target: 'http://localhost:5003',
+    changeOrigin: true,
+  })
+);
+
+// User statistics
+app.use('/statistics/users',
+  createProxyMiddleware({
+    target: 'http://localhost:5003/',
+    changeOrigin: true,
+  })
+);
+
+// Order and sales statistics
+app.use('/statistics/orders',
+  createProxyMiddleware({
+    target: 'http://localhost:5002/',
+    changeOrigin: true,
+  })
+);
+
+app.use('/statistics/sales',
+  createProxyMiddleware({
+    target: 'http://localhost:5001/',
+    changeOrigin: true,
+  })
+);
+
+// Book statistics
+app.use('/statistics/top-books',
+  createProxyMiddleware({
+    target: 'http://localhost:5001/',
     changeOrigin: true,
   })
 );
