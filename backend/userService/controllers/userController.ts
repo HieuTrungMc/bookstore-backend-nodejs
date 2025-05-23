@@ -721,3 +721,38 @@ export const getPostDetails = async (req: Request, res: Response):Promise<void> 
     res.status(500).json({ error: "Error when fetch post details" });
   }
 }
+
+// Reset password
+export const resetPassword = async (req: Request, res: Response) => {
+  try {
+    const { email, password } = req.body;
+
+    // Validate required fields
+    if (!email || !password) {
+      return res.status(400).json({ message: 'Email and password are required' });
+    }
+
+    // Find the user by email
+    const user = await prisma.users.findFirst({
+      where: { email }
+    });
+
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+
+    // Hash the new password
+    const hashedPassword = await hashPassword(password);
+
+    // Update the password
+    await prisma.users.update({
+      where: { id: user.id },
+      data: { password: hashedPassword }
+    });
+
+    res.status(200).json({ message: 'Password reset successfully' });
+  } catch (error) {
+    console.error('Reset password error:', error);
+    res.status(500).json({ message: 'Internal server error' });
+  }
+};
